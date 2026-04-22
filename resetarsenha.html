@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGAC - Redefinir senha</title>
+  <link rel="stylesheet" href="sigac.css">
+</head>
+<body>
+  <div class="container-login">
+    <div class="login-card">
+      <h1>Redefinir senha</h1>
+      <p>Fluxo de redefinição com registro de e-mail simulado no protótipo.</p>
+
+      <form id="resetForm">
+        <div class="field">
+          <label for="email">E-mail cadastrado</label>
+          <input id="email" type="email" required>
+        </div>
+
+        <div class="field">
+          <label for="senha">Nova senha</label>
+          <input id="senha" type="password" required>
+        </div>
+
+        <div class="field">
+          <label for="confirmarSenha">Confirmar nova senha</label>
+          <input id="confirmarSenha" type="password" required>
+        </div>
+
+        <div class="actions-row">
+          <button type="submit">Salvar nova senha</button>
+          <a class="button secondary" href="loginsigac.html">Voltar ao login</a>
+        </div>
+      </form>
+
+      <div id="resetMessage" class="message info hidden"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/reset.js"></script>
+</body>
+</html>

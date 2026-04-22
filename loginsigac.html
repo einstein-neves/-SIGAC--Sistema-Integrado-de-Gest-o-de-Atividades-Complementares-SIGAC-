@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGAC - Login</title>
+  <link rel="stylesheet" href="sigac.css">
+</head>
+<body>
+  <div class="container-login">
+    <div class="login-card">
+      <h1>SIGAC</h1>
+      <p>Sistema Integrado de Gestão de Atividades Complementares</p>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="Digite seu e-mail" required>
+        </div>
+
+        <div class="field">
+          <label for="senha">Senha</label>
+          <input id="senha" type="password" placeholder="Digite sua senha" required>
+        </div>
+
+        <button type="submit" class="btn-login">Entrar</button>
+      </form>
+
+      <!----<div class="notice small" style="margin-top:16px;">
+        Contas de demonstração: admin <strong>einstein@sigac.com</strong> / <strong>123456789</strong>, coordenador <strong>coord.ads@sigac.com</strong> / <strong>123456</strong>, aluno <strong>aluno.ads@sigac.com</strong> / <strong>123456</strong>.
+      </div>---->
+
+      <div class="login-footer">
+        <a href="resetarsenha.html">Esqueci minha senha</a>
+      </div>
+
+      <div id="loginMessage" class="message info hidden"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

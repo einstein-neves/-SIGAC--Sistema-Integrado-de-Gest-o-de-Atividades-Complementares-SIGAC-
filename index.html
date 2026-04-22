@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGAC - Aluno</title>
+  <link rel="stylesheet" href="sigac.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><h2>SIGAC</h2><p>Aluno</p></div>
+    <div class="user-box">
+      <strong id="userName">Carregando...</strong>
+      <span id="userRole">Aluno</span>
+    </div>
+    <nav class="menu">
+      <button data-section="dashboard" class="active">Dashboard <span id="notifCount" style="display:none;">0</span></button>
+      <button data-section="atividades">Atividades</button>
+      <button data-section="oportunidades">Oportunidades</button>
+    </nav>
+    <button id="logoutBtn" class="logout">Sair</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Painel do Aluno</h1>
+        <p id="courseInfo">Buscando informações do curso...</p>
+      </div>
+    </div>
+
+    <section id="dashboard" class="panel-section">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Notificações</h2>
+          <div id="notificationsList" class="list"></div>
+        </div>
+        <div class="card">
+          <h2>Resumo dos envios</h2>
+          <div id="submissionSummary"></div>
+        </div>
+      </div>
+
+      <div id="metricsGrid" class="grid metrics" style="margin-top:18px;"></div>
+
+      <div class="card" style="margin-top:18px;">
+        <h2>Progresso de horas complementares</h2>
+        <div class="progress"><span id="progressBar" style="width:0%"></span></div>
+        <p id="progressText" class="small">0 de 0 horas</p>
+        <p id="hoursBreakdown" class="small"></p>
+      </div>
+    </section>
+
+    <section id="atividades" class="panel-section hidden">
+      <div class="card">
+        <h2>Atividades do meu curso</h2>
+        <div id="activitiesList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="oportunidades" class="panel-section hidden">
+      <div class="card">
+        <h2>Oportunidades disponíveis</h2>
+        <div id="opportunitiesList" class="list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>

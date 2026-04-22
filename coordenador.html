@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGAC - Coordenador</title>
+  <link rel="stylesheet" href="sigac.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><h2>SIGAC</h2><p>Coordenador</p></div>
+    <div class="user-box">
+      <strong id="userName">Carregando...</strong>
+      <span id="userRole">Coordenador</span>
+    </div>
+    <nav class="menu">
+      <button data-section="dashboard" class="active">Dashboard</button>
+      <button data-section="atividades">Atividades</button>
+      <button data-section="envios">Envios</button>
+      <button data-section="oportunidades">Oportunidades</button>
+    </nav>
+    <button id="logoutBtn" class="logout">Sair</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Painel do Coordenador</h1>
+        <p id="coordinatorCoursesInfo">Gerencie atividades, alunos e avaliações do seu curso.</p>
+      </div>
+    </div>
+
+    <section id="dashboard" class="panel-section">
+      <div id="metricsGrid" class="grid metrics"></div>
+      <div class="dual-grid" style="margin-top:18px;">
+        <div class="card"><h2>Status geral</h2><canvas id="chartStatus"></canvas></div>
+        <div class="card"><h2>Engajamento dos alunos</h2><canvas id="chartEngajamento"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <h2>Alunos dos seus cursos</h2>
+        <div id="studentsByCourse" class="list"></div>
+      </div>
+    </section>
+
+    <section id="atividades" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Nova atividade</h2>
+          <form id="activityForm">
+            <div class="field"><label for="titulo">Título</label><input id="titulo" type="text" required></div>
+            <div class="field"><label for="descricao">Descrição</label><textarea id="descricao" required></textarea></div>
+            <div class="field"><label for="courseId">Curso destino</label><select id="courseId" required></select></div>
+            <div class="dual-grid">
+              <div class="field"><label for="horas">Horas</label><input id="horas" type="number" min="1" required></div>
+              <div class="field"><label for="prazo">Prazo</label><input id="prazo" type="date"></div>
+            </div>
+            <div class="field"><label for="material">Material de apoio</label><input id="material" type="file"></div>
+            <button type="submit">Publicar atividade</button>
+          </form>
+          <div id="activityMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Atividades lançadas</h2>
+          <div id="activitiesList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="envios" class="panel-section hidden">
+      <div class="card">
+        <h2>Envios para avaliação</h2>
+        <div id="pendingSubmissionsList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="oportunidades" class="panel-section hidden">
+      <div class="card">
+        <h2>Oportunidades abertas</h2>
+        <div id="opportunitiesList" class="list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/coordenador.js"></script>
+</body>
+</html>

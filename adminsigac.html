@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGAC - Super Administrador</title>
+  <link rel="stylesheet" href="sigac.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><h2>SIGAC</h2><p>Super Admin</p></div>
+    <div class="user-box">
+      <strong id="userName">Carregando...</strong>
+      <span id="userRole">Administração Global</span>
+    </div>
+    <nav class="menu">
+      <button data-section="dashboard" class="active">Dashboard</button>
+      <button data-section="usuarios">Usuários</button>
+      <button data-section="cursos">Cursos</button>
+      <button data-section="vinculos">Vínculos</button>
+      <button data-section="oportunidades">Oportunidades</button>
+      <button data-section="configuracoes">Configurações</button>
+    </nav>
+    <button id="logoutBtn" class="logout">Sair</button>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Painel Administrativo</h1>
+        <p>Gerencie cursos, usuários, metas institucionais e oportunidades.</p>
+      </div>
+    </div>
+
+    <section id="dashboard" class="panel-section">
+      <div id="metricsGrid" class="grid metrics"></div>
+      <div class="dual-grid" style="margin-top:18px;">
+        <div class="card"><h2>Taxa de aprovação por curso</h2><canvas id="chartAprovacaoCursos"></canvas></div>
+        <div class="card"><h2>Status dos envios</h2><canvas id="chartPendencias"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <h2>Cursos e total de alunos</h2>
+        <div id="coursesDashboardList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="usuarios" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Novo usuário</h2>
+          <form id="userForm">
+            <div class="field"><label for="userNameInput">Nome</label><input id="userNameInput" type="text" required></div>
+            <div class="field"><label for="userEmailInput">E-mail</label><input id="userEmailInput" type="email" required></div>
+            <div class="field"><label for="userPasswordInput">Senha</label><input id="userPasswordInput" type="text" required></div>
+            <div class="field"><label for="userTypeInput">Tipo</label><select id="userTypeInput" required><option value="aluno">Aluno</option><option value="coordenador">Coordenador</option></select></div>
+            <div class="field"><label for="userCourseInput">Curso inicial do aluno</label><select id="userCourseInput"></select></div>
+            <div class="field"><label for="userCoordinatorCoursesInput">Cursos iniciais do coordenador</label><select id="userCoordinatorCoursesInput" multiple size="4"></select></div>
+            <button type="submit">Cadastrar usuário</button>
+          </form>
+          <div id="userFormMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Usuários cadastrados</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Vínculo</th><th>Status</th><th>Ação</th></tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cursos" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Novo curso</h2>
+          <form id="courseForm">
+            <div class="field"><label for="sigla">Sigla</label><input id="sigla" type="text" maxlength="10" required></div>
+            <div class="field"><label for="nomeCurso">Nome</label><input id="nomeCurso" type="text" required></div>
+            <div class="field"><label for="areaCurso">Área</label><input id="areaCurso" type="text" required></div>
+            <div class="dual-grid">
+              <div class="field"><label for="turnoCurso">Turno</label><input id="turnoCurso" type="text" value="Noite" required></div>
+              <div class="field"><label for="horasMetaCurso">Meta de horas</label><input id="horasMetaCurso" type="number" min="1" required></div>
+            </div>
+            <button type="submit">Cadastrar curso</button>
+          </form>
+          <div id="courseFormMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Cursos ativos</h2>
+          <div id="coursesList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vinculos" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Vincular aluno a curso</h2>
+          <form id="studentLinkForm">
+            <div class="field"><label for="studentSelect">Aluno</label><select id="studentSelect" required></select></div>
+            <div class="field"><label for="studentCourseSelect">Curso</label><select id="studentCourseSelect" required></select></div>
+            <button type="submit">Salvar vínculo do aluno</button>
+          </form>
+          <div id="studentLinkMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Vincular coordenador a cursos</h2>
+          <form id="coordinatorLinkForm">
+            <div class="field"><label for="coordinatorSelect">Coordenador</label><select id="coordinatorSelect" required></select></div>
+            <div class="field"><label for="coordinatorCoursesSelect">Cursos</label><select id="coordinatorCoursesSelect" multiple size="6" required></select></div>
+            <button type="submit">Salvar vínculos do coordenador</button>
+          </form>
+          <div id="coordinatorLinkMessage" class="message info hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="oportunidades" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Nova oportunidade</h2>
+          <form id="opportunityForm">
+            <div class="field"><label for="oppTitle">Título</label><input id="oppTitle" type="text" required></div>
+            <div class="field"><label for="oppDesc">Descrição</label><textarea id="oppDesc" required></textarea></div>
+            <div class="field"><label for="oppHours">Horas extras</label><input id="oppHours" type="number" min="1" required></div>
+            <button type="submit">Lançar oportunidade</button>
+          </form>
+          <div id="opportunityFormMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Oportunidades lançadas</h2>
+          <div id="opportunitiesAdminList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="configuracoes" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Parâmetros do sistema</h2>
+          <form id="settingsForm">
+            <div class="field"><label for="horasMeta">Meta global de horas</label><input id="horasMeta" type="number" min="1" required></div>
+            <div class="field"><label><input id="emailToggle" type="checkbox"> Habilitar notificações por e-mail simuladas</label></div>
+            <button type="submit">Salvar configurações</button>
+          </form>
+          <div class="actions-row" style="margin-top:12px;">
+            <a id="downloadEmailLog" class="button secondary" download="sigac-email-log.txt">Baixar log de e-mails simulados</a>
+            <button id="resetDemoBtn" type="button" class="secondary">Resetar dados de demonstração</button>
+          </div>
+          <div id="settingsMessage" class="message info hidden"></div>
+          <div class="notice small" style="margin-top:12px;">OCR continua opcional e não foi ativado neste protótipo, porque o projeto ainda não possui motor de reconhecimento de texto embarcado.</div>
+        </div>
+        <div class="card">
+          <h2>Últimos e-mails simulados</h2>
+          <div id="emailList" class="list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
