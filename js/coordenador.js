@@ -28,6 +28,15 @@
     box.classList.remove('hidden');
   }
 
+  function badgeClass(status) {
+    return {
+      aprovado: 'aprovado',
+      rejeitado: 'rejeitado',
+      pendente: 'em_analise',
+      em_analise: 'em_analise'
+    }[status] || 'em_analise';
+  }
+
   function setActiveSection(sectionId) {
     document.querySelectorAll('.panel-section').forEach((section) => section.classList.add('hidden'));
     document.querySelectorAll('[data-section]').forEach((button) => button.classList.remove('active'));
@@ -144,6 +153,49 @@
     });
   }
 
+  function renderCertificates(user) {
+    const list = SIGACStore.listCertificatesForUser(user.id);
+    document.getElementById('certificatesList').innerHTML = list.length
+      ? list.map((certificate) => `
+          <div class="item">
+            <h4>${escapeHtml(certificate.fileName)}</h4>
+            <p class="meta">Enviado em ${formatDate(certificate.createdAt)} | Horas declaradas: ${certificate.declaredHours || 0}h</p>
+            <p><strong>OCR:</strong> <span class="badge ${badgeClass(certificate.ocrStatus)}">${escapeHtml(certificate.ocrStatus.replaceAll('_', ' '))}</span></p>
+            <p><strong>Admin:</strong> <span class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(certificate.adminStatus.replaceAll('_', ' '))}</span></p>
+            <p class="small">${escapeHtml(certificate.ocrReason || 'Aguardando pré-análise do OCR.')}</p>
+            ${certificate.adminFeedback ? `<p class="small"><strong>Feedback:</strong> ${escapeHtml(certificate.adminFeedback)}</p>` : ''}
+            <div class="actions-row"><a class="button secondary" href="${certificate.fileData}" download="${escapeHtml(certificate.fileName)}">Abrir certificado</a></div>
+          </div>
+        `).join('')
+      : '<div class="item">Você ainda não enviou certificados para o administrador.</div>';
+  }
+
+  function setupCertificateForm(user) {
+    const form = document.getElementById('certificateForm');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = document.getElementById('certificateFile').files[0];
+      if (!file) {
+        showMessage('certificateMessage', 'Selecione um arquivo antes de enviar.', 'error');
+        return;
+      }
+      try {
+        const fileData = await fileToDataUrl(file);
+        SIGACStore.submitCertificate(user.id, {
+          fileName: file.name,
+          fileData,
+          observation: document.getElementById('certificateObservation').value,
+          declaredHours: document.getElementById('certificateHours').value
+        });
+        form.reset();
+        showMessage('certificateMessage', 'Certificado enviado ao administrador com sucesso.', 'success');
+        renderAll(user);
+      } catch (error) {
+        showMessage('certificateMessage', error.message, 'error');
+      }
+    });
+  }
+
   function renderOpportunities(user) {
     const container = document.getElementById('opportunitiesList');
     const opportunities = SIGACStore.listOpportunities();
@@ -211,6 +263,7 @@
     renderDashboard(user);
     renderActivities(user);
     renderSubmissions(user);
+    renderCertificates(user);
     renderOpportunities(user);
   }
 
@@ -225,6 +278,7 @@
     document.getElementById('userRole').textContent = 'Coordenador';
     populateCourseSelects(user);
     setupActivityForm(user);
+    setupCertificateForm(user);
 
     document.querySelectorAll('[data-section]').forEach((button) => {
       button.addEventListener('click', () => setActiveSection(button.dataset.section));

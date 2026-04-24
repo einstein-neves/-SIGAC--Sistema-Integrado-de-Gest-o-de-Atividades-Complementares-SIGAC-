@@ -21,6 +21,7 @@
       <button data-section="cursos">Cursos</button>
       <button data-section="vinculos">Vínculos</button>
       <button data-section="oportunidades">Oportunidades</button>
+      <button data-section="certificados">Certificados</button>
       <button data-section="configuracoes">Configurações</button>
     </nav>
     <button id="logoutBtn" class="logout">Sair</button>
@@ -140,6 +141,21 @@
       </div>
     </section>
 
+
+    <section id="certificados" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Fila de certificados</h2>
+          <div class="notice small">O OCR faz uma pré-validação. A decisão final continua com o administrador.</div>
+          <div id="certificateAdminStats" class="grid metrics"></div>
+        </div>
+        <div class="card">
+          <h2>Certificados recebidos</h2>
+          <div id="certificatesAdminList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="configuracoes" class="panel-section hidden">
       <div class="dual-grid">
         <div class="card">
@@ -147,6 +163,7 @@
           <form id="settingsForm">
             <div class="field"><label for="horasMeta">Meta global de horas</label><input id="horasMeta" type="number" min="1" required></div>
             <div class="field"><label><input id="emailToggle" type="checkbox"> Habilitar notificações por e-mail simuladas</label></div>
+            <div class="field"><label><input id="ocrToggle" type="checkbox"> Habilitar pré-validação OCR de certificados</label></div>
             <button type="submit">Salvar configurações</button>
           </form>
           <div class="actions-row" style="margin-top:12px;">
@@ -154,7 +171,7 @@
             <button id="resetDemoBtn" type="button" class="secondary">Resetar dados de demonstração</button>
           </div>
           <div id="settingsMessage" class="message info hidden"></div>
-          <div class="notice small" style="margin-top:12px;">OCR continua opcional e não foi ativado neste protótipo, porque o projeto ainda não possui motor de reconhecimento de texto embarcado.</div>
+          <div class="notice small" style="margin-top:12px;">O OCR agora está preparado como pré-validação local. Quando o banco/API forem integrados, basta trocar a camada de dados para persistir os resultados.</div>
         </div>
         <div class="card">
           <h2>Últimos e-mails simulados</h2>
@@ -166,6 +183,7 @@
 </div>
 
 <script src="js/data.js"></script>
+<script src="js/ocr.js"></script>
 <script src="js/admin.js"></script>
 </body>
 </html>

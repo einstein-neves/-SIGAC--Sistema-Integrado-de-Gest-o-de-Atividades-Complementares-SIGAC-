@@ -330,3 +330,9 @@ hr.soft {
 .field select[multiple] { min-height: 140px; }
 .item .actions-row { margin-top: 10px; }
 .notice.small { line-height: 1.45; }
+
+
+.certificate-grid .card { min-height: 100%; }
+pre.notice.small { max-height: 220px; overflow: auto; }
+.item details summary { font-weight: 600; color: var(--muted); }
+.item .badge + .badge { margin-left: 6px; }

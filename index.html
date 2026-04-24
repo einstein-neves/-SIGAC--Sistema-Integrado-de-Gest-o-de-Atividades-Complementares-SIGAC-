@@ -17,6 +17,7 @@
     <nav class="menu">
       <button data-section="dashboard" class="active">Dashboard <span id="notifCount" style="display:none;">0</span></button>
       <button data-section="atividades">Atividades</button>
+      <button data-section="certificados">Certificados</button>
       <button data-section="oportunidades">Oportunidades</button>
     </nav>
     <button id="logoutBtn" class="logout">Sair</button>
@@ -56,6 +57,26 @@
       <div class="card">
         <h2>Atividades do meu curso</h2>
         <div id="activitiesList" class="list"></div>
+      </div>
+    </section>
+
+
+    <section id="certificados" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card">
+          <h2>Enviar certificado ao admin</h2>
+          <form id="certificateForm">
+            <div class="field"><label for="certificateHours">Horas declaradas</label><input id="certificateHours" type="number" min="0" placeholder="Ex.: 20"></div>
+            <div class="field"><label for="certificateObservation">Observação</label><textarea id="certificateObservation" placeholder="Conte ao admin do que se trata este certificado."></textarea></div>
+            <div class="field"><label for="certificateFile">Arquivo do certificado</label><input id="certificateFile" type="file" accept="application/pdf,image/*" required></div>
+            <button type="submit">Enviar certificado</button>
+          </form>
+          <div id="certificateMessage" class="message info hidden"></div>
+        </div>
+        <div class="card">
+          <h2>Meus certificados enviados</h2>
+          <div id="certificatesList" class="list"></div>
+        </div>
       </div>
     </section>
 

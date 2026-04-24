@@ -18,6 +18,65 @@
   const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   const textDataUrl = (text) => `data:text/plain;base64,${btoa(unescape(encodeURIComponent(text)))}`;
 
+
+  function normalizeData(data) {
+    if (!data || typeof data !== 'object') data = {};
+    if (!data.settings || typeof data.settings !== 'object') data.settings = {};
+    data.settings.horasMetaPadrao = Number(data.settings.horasMetaPadrao || 120);
+    data.settings.emailNotificationsEnabled = data.settings.emailNotificationsEnabled !== false;
+    data.settings.ocrDisponivel = data.settings.ocrDisponivel !== false;
+    data.settings.updatedAt = data.settings.updatedAt || nowIso();
+
+    ['courses', 'users', 'opportunities', 'activities', 'submissions', 'notifications', 'emails', 'certificates'].forEach((key) => {
+      if (!Array.isArray(data[key])) data[key] = [];
+    });
+
+    data.certificates = data.certificates.map((certificate) => ({
+      id: certificate.id || uid('cert'),
+      senderId: certificate.senderId || '',
+      senderType: certificate.senderType || 'aluno',
+      fileName: certificate.fileName || certificate.arquivoNome || 'certificado.txt',
+      fileData: certificate.fileData || certificate.arquivoData || '',
+      observation: certificate.observation || certificate.observacao || '',
+      declaredHours: Number(certificate.declaredHours || 0) || 0,
+      extractedText: String(certificate.extractedText || ''),
+      detectedHours: Number(certificate.detectedHours || 0) || 0,
+      detectedName: String(certificate.detectedName || ''),
+      detectedInstitution: String(certificate.detectedInstitution || ''),
+      detectedDate: String(certificate.detectedDate || ''),
+      detectedTitle: String(certificate.detectedTitle || ''),
+      detectedCourseName: String(certificate.detectedCourseName || ''),
+      foundFields: Array.isArray(certificate.foundFields) ? certificate.foundFields.filter(Boolean) : [],
+      missingFields: Array.isArray(certificate.missingFields) ? certificate.missingFields.filter(Boolean) : [],
+      confidenceScore: Number(certificate.confidenceScore || 0) || 0,
+      humanSummary: String(certificate.humanSummary || ''),
+      ocrStatus: certificate.ocrStatus || 'nao_processado',
+      ocrReason: certificate.ocrReason || 'Aguardando análise do admin.',
+      adminStatus: certificate.adminStatus || 'pendente',
+      adminFeedback: certificate.adminFeedback || '',
+      approvedHours: Number(certificate.approvedHours || 0) || 0,
+      createdAt: certificate.createdAt || nowIso(),
+      reviewedAt: certificate.reviewedAt || '',
+      reviewedBy: certificate.reviewedBy || '',
+      ocrProcessedAt: certificate.ocrProcessedAt || '',
+      senderSnapshot: certificate.senderSnapshot || null
+    })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return data;
+  }
+
+  function deriveCertificateSender(data, certificate) {
+    const sender = getUserById(data, certificate.senderId);
+    return sender ? clone(sender) : clone(certificate.senderSnapshot || null);
+  }
+
+  function approvedCertificateHoursInternal(data, studentId) {
+    return data.certificates.reduce((total, certificate) => {
+      if (certificate.senderId !== studentId || certificate.senderType !== 'aluno' || certificate.adminStatus !== 'aprovado') return total;
+      return total + Number(certificate.approvedHours || certificate.detectedHours || certificate.declaredHours || 0);
+    }, 0);
+  }
+
   function defaultData() {
     const ads = 'course_ads';
     const log = 'course_log';
@@ -37,7 +96,7 @@
       settings: {
         horasMetaPadrao: 120,
         emailNotificationsEnabled: true,
-        ocrDisponivel: false,
+        ocrDisponivel: true,
         updatedAt: nowIso()
       },
       courses: [
@@ -83,6 +142,38 @@
           createdAt: nowIso()
         }
       ],
+      certificates: [
+        {
+          id: 'cert_demo_1',
+          senderId: alunoAds,
+          senderType: 'aluno',
+          fileName: 'certificado-git-ana.txt',
+          fileData: textDataUrl('Certificado de Participação\nAna Clara\nMinicurso de Git e GitHub\nCarga horária: 8 horas\nSENAC\n15/04/2026'),
+          observation: 'Certificado da oficina de Git.',
+          declaredHours: 8,
+          extractedText: '',
+          detectedHours: 0,
+          detectedName: '',
+          detectedInstitution: '',
+          detectedDate: '',
+          detectedTitle: '',
+          detectedCourseName: '',
+          foundFields: [],
+          missingFields: [],
+          confidenceScore: 0,
+          humanSummary: '',
+          ocrStatus: 'nao_processado',
+          ocrReason: 'Aguardando análise do admin.',
+          adminStatus: 'pendente',
+          adminFeedback: '',
+          approvedHours: 0,
+          createdAt: nowIso(),
+          reviewedAt: '',
+          reviewedBy: '',
+          ocrProcessedAt: '',
+          senderSnapshot: { nome: 'Ana Clara', email: 'aluno.ads@sigac.com' }
+        }
+      ],
       submissions: [
         {
           id: 'sub_1',
@@ -119,23 +210,27 @@
     const raw = localStorage.getItem(DATA_KEY);
     if (!raw) {
       const seed = defaultData();
-      localStorage.setItem(DATA_KEY, JSON.stringify(seed));
-      return seed;
+      const normalized = normalizeData(seed);
+      localStorage.setItem(DATA_KEY, JSON.stringify(normalized));
+      return normalized;
     }
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = normalizeData(JSON.parse(raw));
       if (!parsed || typeof parsed !== 'object') throw new Error('Dados inválidos');
+      localStorage.setItem(DATA_KEY, JSON.stringify(parsed));
       return parsed;
     } catch (_) {
       const seed = defaultData();
-      localStorage.setItem(DATA_KEY, JSON.stringify(seed));
-      return seed;
+      const normalized = normalizeData(seed);
+      localStorage.setItem(DATA_KEY, JSON.stringify(normalized));
+      return normalized;
     }
   }
 
   function saveData(data) {
-    localStorage.setItem(DATA_KEY, JSON.stringify(data));
-    return data;
+    const normalized = normalizeData(data);
+    localStorage.setItem(DATA_KEY, JSON.stringify(normalized));
+    return normalized;
   }
 
   function mutate(mutator) {
@@ -221,9 +316,10 @@
 
     const course = getCourseByIdInternal(data, student.courseId);
     const target = courseTarget(course, data);
-    const total = approvedHours + opportunityHours;
+    const certificateHours = approvedCertificateHoursInternal(data, studentId);
+    const total = approvedHours + opportunityHours + certificateHours;
     const percent = target > 0 ? Math.min(100, Math.round((total / target) * 100)) : 0;
-    return { total, target, percent, approvedHours, opportunityHours };
+    return { total, target, percent, approvedHours, opportunityHours, certificateHours };
   }
 
   function listNotificationsForUser(userId) {
@@ -320,6 +416,149 @@
     );
   }
 
+
+  function listCertificatesForUser(userId) {
+    const data = loadData();
+    return clone(
+      data.certificates
+        .filter((certificate) => certificate.senderId === userId)
+        .map((certificate) => ({
+          ...certificate,
+          sender: deriveCertificateSender(data, certificate)
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    );
+  }
+
+  function listCertificatesForAdmin() {
+    const data = loadData();
+    return clone(
+      data.certificates
+        .map((certificate) => ({
+          ...certificate,
+          sender: deriveCertificateSender(data, certificate),
+          reviewedByUser: certificate.reviewedBy ? getUserById(data, certificate.reviewedBy) : null
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    );
+  }
+
+  function submitCertificate(senderId, payload) {
+    const fileName = String(payload.fileName || '').trim();
+    const fileData = String(payload.fileData || '').trim();
+    const observation = String(payload.observation || '').trim();
+    const declaredHours = Number(payload.declaredHours || 0) || 0;
+    if (!fileName || !fileData) throw new Error('Selecione um certificado antes de enviar.');
+
+    return mutate((data) => {
+      const sender = getUserById(data, senderId);
+      if (!sender || !['aluno', 'coordenador'].includes(sender.tipo)) {
+        throw new Error('Somente alunos e coordenadores podem enviar certificados.');
+      }
+
+      const certificate = {
+        id: uid('cert'),
+        senderId: sender.id,
+        senderType: sender.tipo,
+        fileName,
+        fileData,
+        observation,
+        declaredHours,
+        extractedText: '',
+        detectedHours: 0,
+        detectedName: '',
+        detectedInstitution: '',
+        detectedDate: '',
+        detectedTitle: '',
+          detectedCourseName: '',
+          foundFields: [],
+        missingFields: [],
+        confidenceScore: 0,
+          humanSummary: '',
+          ocrStatus: 'nao_processado',
+        ocrReason: 'Aguardando análise do admin.',
+        adminStatus: 'pendente',
+        adminFeedback: '',
+        approvedHours: 0,
+        createdAt: nowIso(),
+        reviewedAt: '',
+        reviewedBy: '',
+        ocrProcessedAt: '',
+        senderSnapshot: { nome: sender.nome, email: sender.email }
+      };
+
+      data.certificates.unshift(certificate);
+      data.users
+        .filter((user) => user.tipo === 'superadmin' && user.ativo)
+        .forEach((admin) => {
+          addNotificationInternal(data, admin.id, `${sender.nome} enviou um certificado para validação.`, 'warning');
+          queueEmailInternal(data, admin.email, 'SIGAC - novo certificado enviado', `${sender.nome} enviou o certificado ${fileName} para análise.`, 'certificado');
+        });
+      addNotificationInternal(data, sender.id, 'Seu certificado foi enviado e aguarda análise do administrador.', 'info');
+      return clone(certificate);
+    });
+  }
+
+  function saveCertificateOcrResult(adminId, certificateId, result) {
+    return mutate((data) => {
+      const admin = getUserById(data, adminId);
+      if (!admin || admin.tipo !== 'superadmin') throw new Error('Apenas o admin pode processar OCR.');
+      const certificate = data.certificates.find((item) => item.id === certificateId);
+      if (!certificate) throw new Error('Certificado não encontrado.');
+
+      certificate.extractedText = String(result.extractedText || '').trim();
+      certificate.detectedHours = Number(result.detectedHours || 0) || 0;
+      certificate.detectedName = String(result.detectedName || '').trim();
+      certificate.detectedInstitution = String(result.detectedInstitution || '').trim();
+      certificate.detectedDate = String(result.detectedDate || '').trim();
+      certificate.detectedTitle = String(result.detectedTitle || '').trim();
+      certificate.detectedCourseName = String(result.detectedCourseName || '').trim();
+      certificate.foundFields = Array.isArray(result.foundFields) ? result.foundFields.filter(Boolean) : [];
+      certificate.missingFields = Array.isArray(result.missingFields) ? result.missingFields.filter(Boolean) : [];
+      certificate.confidenceScore = Number(result.confidenceScore || 0) || 0;
+      certificate.humanSummary = String(result.humanSummary || '').trim();
+      certificate.ocrStatus = result.ocrStatus || 'analise_manual';
+      certificate.ocrReason = String(result.ocrReason || 'Pré-análise concluída.').trim();
+      certificate.ocrProcessedAt = nowIso();
+      if (certificate.adminStatus === 'pendente' && certificate.ocrStatus === 'aprovado_automatico') {
+        certificate.approvedHours = certificate.detectedHours || certificate.declaredHours || 0;
+      }
+      const sender = deriveCertificateSender(data, certificate);
+      if (sender?.id) {
+        addNotificationInternal(data, sender.id, `O OCR analisou seu certificado e marcou o status como ${certificate.ocrStatus.replaceAll('_', ' ')}.`, 'info');
+      }
+      return clone(certificate);
+    });
+  }
+
+  function reviewCertificate(adminId, certificateId, status, feedback) {
+    const finalStatus = status === 'aprovado' ? 'aprovado' : 'rejeitado';
+    return mutate((data) => {
+      const admin = getUserById(data, adminId);
+      if (!admin || admin.tipo !== 'superadmin') throw new Error('Apenas o admin pode revisar certificados.');
+      const certificate = data.certificates.find((item) => item.id === certificateId);
+      if (!certificate) throw new Error('Certificado não encontrado.');
+
+      certificate.adminStatus = finalStatus;
+      certificate.adminFeedback = String(feedback || '').trim();
+      certificate.reviewedAt = nowIso();
+      certificate.reviewedBy = admin.id;
+      certificate.approvedHours = finalStatus === 'aprovado'
+        ? Number(certificate.detectedHours || certificate.declaredHours || certificate.approvedHours || 0)
+        : 0;
+
+      const sender = deriveCertificateSender(data, certificate);
+      const human = finalStatus === 'aprovado' ? 'aprovado' : 'rejeitado';
+      if (sender?.id) {
+        addNotificationInternal(data, sender.id, `Seu certificado ${certificate.fileName} foi ${human} pelo administrador.`, finalStatus === 'aprovado' ? 'success' : 'warning');
+      }
+      if (sender?.email) {
+        queueEmailInternal(data, sender.email, `SIGAC - certificado ${human}`, `O certificado ${certificate.fileName} foi ${human}. Feedback: ${certificate.adminFeedback || 'Sem observações.'}`, 'certificado-avaliacao');
+      }
+      return clone(certificate);
+    });
+  }
+
   function getAdminDashboardData() {
     const data = loadData();
     const activeUsers = data.users.filter((user) => user.ativo);
@@ -350,12 +589,14 @@
         totalOportunidades: data.opportunities.length,
         pendentes: pending,
         aprovados: approved,
-        rejeitados: rejected
+        rejeitados: rejected,
+        certificadosPendentes: data.certificates.filter((certificate) => certificate.adminStatus === 'pendente').length
       },
       courses,
       users: clone(data.users),
       emails: clone(data.emails),
-      settings: clone(data.settings)
+      settings: clone(data.settings),
+      certificates: listCertificatesForAdmin()
     };
   }
 
@@ -490,6 +731,7 @@
     return mutate((data) => {
       data.settings.horasMetaPadrao = Number(payload.horasMetaPadrao || data.settings.horasMetaPadrao || 120);
       data.settings.emailNotificationsEnabled = Boolean(payload.emailNotificationsEnabled);
+      if (payload.ocrDisponivel != null) data.settings.ocrDisponivel = Boolean(payload.ocrDisponivel);
       data.settings.updatedAt = nowIso();
       if (payload.courseTargets && typeof payload.courseTargets === 'object') {
         data.courses.forEach((course) => {
@@ -686,6 +928,11 @@
     toggleOpportunity,
     listNotificationsForUser,
     markNotificationsAsRead,
+    listCertificatesForUser,
+    listCertificatesForAdmin,
+    submitCertificate,
+    saveCertificateOcrResult,
+    reviewCertificate,
     getStudentProgress,
     listCoordinatorStudents,
     getAdminDashboardData,
@@ -695,3 +942,7 @@
     _dump: () => clone(loadData())
   };
 })();
+
+
+
+

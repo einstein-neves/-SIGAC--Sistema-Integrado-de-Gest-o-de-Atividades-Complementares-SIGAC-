@@ -25,6 +25,22 @@
     });
   }
 
+  function showMessage(id, text, type) {
+    const box = document.getElementById(id);
+    box.textContent = text;
+    box.className = `message ${type}`;
+    box.classList.remove('hidden');
+  }
+
+  function badgeClass(status) {
+    return {
+      aprovado: 'aprovado',
+      rejeitado: 'rejeitado',
+      pendente: 'em_analise',
+      em_analise: 'em_analise'
+    }[status] || 'em_analise';
+  }
+
   function renderNotifications(user) {
     const container = document.getElementById('notificationsList');
     const notifications = SIGACStore.listNotificationsForUser(user.id);
@@ -69,7 +85,7 @@
 
     document.getElementById('progressBar').style.width = `${progress.percent}%`;
     document.getElementById('progressText').textContent = `${progress.total} de ${progress.target} horas (${progress.percent}%)`;
-    document.getElementById('hoursBreakdown').textContent = `Atividades aprovadas: ${progress.approvedHours}h | Oportunidades inscritas: ${progress.opportunityHours}h`;
+    document.getElementById('hoursBreakdown').textContent = `Atividades aprovadas: ${progress.approvedHours}h | Oportunidades inscritas: ${progress.opportunityHours}h | Certificados aprovados: ${progress.certificateHours}h`;
 
     document.getElementById('submissionSummary').innerHTML = `
       <ul style="list-style:none; padding:0; margin:0;">
@@ -140,6 +156,49 @@
     });
   }
 
+  function renderCertificates(user) {
+    const list = SIGACStore.listCertificatesForUser(user.id);
+    document.getElementById('certificatesList').innerHTML = list.length
+      ? list.map((certificate) => `
+          <div class="item">
+            <h4>${escapeHtml(certificate.fileName)}</h4>
+            <p class="meta">Enviado em ${formatDate(certificate.createdAt)} | Horas declaradas: ${certificate.declaredHours || 0}h</p>
+            <p><strong>OCR:</strong> <span class="badge ${badgeClass(certificate.ocrStatus)}">${escapeHtml(certificate.ocrStatus.replaceAll('_', ' '))}</span></p>
+            <p><strong>Admin:</strong> <span class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(certificate.adminStatus.replaceAll('_', ' '))}</span></p>
+            <p class="small">${escapeHtml(certificate.ocrReason || 'Aguardando pré-análise do OCR.')}</p>
+            ${certificate.adminFeedback ? `<p class="small"><strong>Feedback:</strong> ${escapeHtml(certificate.adminFeedback)}</p>` : ''}
+            <div class="actions-row"><a class="button secondary" href="${certificate.fileData}" download="${escapeHtml(certificate.fileName)}">Abrir certificado</a></div>
+          </div>
+        `).join('')
+      : '<div class="item">Você ainda não enviou certificados para o administrador.</div>';
+  }
+
+  function setupCertificateForm(user) {
+    const form = document.getElementById('certificateForm');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const file = document.getElementById('certificateFile').files[0];
+      if (!file) {
+        showMessage('certificateMessage', 'Selecione um arquivo antes de enviar.', 'error');
+        return;
+      }
+      try {
+        const fileData = await fileToDataUrl(file);
+        SIGACStore.submitCertificate(user.id, {
+          fileName: file.name,
+          fileData,
+          observation: document.getElementById('certificateObservation').value,
+          declaredHours: document.getElementById('certificateHours').value
+        });
+        form.reset();
+        showMessage('certificateMessage', 'Certificado enviado ao administrador com sucesso.', 'success');
+        renderAll(user);
+      } catch (error) {
+        showMessage('certificateMessage', error.message, 'error');
+      }
+    });
+  }
+
   function renderOpportunities(user) {
     const container = document.getElementById('opportunitiesList');
     const opportunities = SIGACStore.listOpportunities();
@@ -172,6 +231,7 @@
     renderNotifications(user);
     renderDashboard(user);
     renderActivities(user);
+    renderCertificates(user);
     renderOpportunities(user);
   }
 
@@ -191,6 +251,7 @@
       window.location.href = 'loginsigac.html';
     });
 
+    setupCertificateForm(user);
     renderAll(user);
   }
 
