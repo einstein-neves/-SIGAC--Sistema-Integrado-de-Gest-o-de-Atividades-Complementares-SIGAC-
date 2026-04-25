@@ -1,0 +1,18 @@
+Exportado em: 2026-04-23T02:03:56.844Z
+Banco: neondb
+Usuario: neondb_owner
+
+Tabelas exportadas:
+- activities: 2 registro(s)
+- coordinator_courses: 2 registro(s)
+- courses: 3 registro(s)
+- emails: 0 registro(s)
+- notifications: 2 registro(s)
+- opportunities: 2 registro(s)
+- opportunity_registrations: 3 registro(s)
+- playing_with_neon: 40 registro(s)
+- sessions: 5 registro(s)
+- settings: 4 registro(s)
+- submission_versions: 1 registro(s)
+- submissions: 1 registro(s)
+- users: 6 registro(s)

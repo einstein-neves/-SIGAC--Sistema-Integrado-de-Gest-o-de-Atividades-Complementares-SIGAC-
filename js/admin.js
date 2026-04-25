@@ -34,9 +34,7 @@
 
   function buildAdminFriendlyMessage(certificate) {
     if (certificate.humanSummary) return certificate.humanSummary;
-    if (certificate.missingFields?.length) {
-      return `Faltou ${certificate.missingFields.join(', ')}.`;
-    }
+    if (certificate.missingFields?.length) return `Faltou ${certificate.missingFields.join(', ')}.`;
     return certificate.ocrReason || 'Aguardando OCR.';
   }
 
@@ -114,9 +112,9 @@
         <h4>${escapeHtml(course.sigla)} - ${escapeHtml(course.nome)}</h4>
         <p class="meta">Area: ${escapeHtml(course.area)} | Turno: ${escapeHtml(course.turno)} | Meta: ${course.horasMeta}h</p>
         <p><strong>Total de alunos:</strong> ${course.totalAlunos}</p>
-        ${course.students.length ? `
-          <div class="small"><strong>Alunos:</strong> ${course.students.map((student) => `${escapeHtml(student.nome)} (${student.progress.total}/${student.progress.target}h)`).join(', ')}</div>
-        ` : '<div class="small">Nenhum aluno vinculado.</div>'}
+        ${course.students.length
+          ? `<div class="small"><strong>Alunos:</strong> ${course.students.map((student) => `${escapeHtml(student.nome)} (${student.progress.total}/${student.progress.target}h)`).join(', ')}</div>`
+          : '<div class="small">Nenhum aluno vinculado.</div>'}
       </div>
     `).join('');
 
@@ -141,13 +139,6 @@
         </tr>
       `;
     }).join('');
-
-    tbody.querySelectorAll('.toggle-status').forEach((button) => {
-      button.addEventListener('click', () => {
-        SIGACStore.updateUserStatus(button.dataset.id, button.dataset.active !== 'true');
-        renderAll();
-      });
-    });
   }
 
   function renderCourses() {
@@ -176,7 +167,7 @@
       : '<div class="item">Nenhuma oportunidade cadastrada.</div>';
   }
 
-  function renderCertificates(user) {
+  function renderCertificates() {
     const data = SIGACStore.getAdminDashboardData();
     document.getElementById('certificateAdminStats').innerHTML = `
       <div class="card"><h3>Pendentes</h3><div class="metric-value">${data.certificates.filter((item) => item.adminStatus === 'pendente').length}</div></div>
@@ -222,64 +213,6 @@
         <div class="field" style="margin-top:12px;"><label>Feedback do admin</label><textarea class="certificate-feedback" placeholder="Comentario final para o remetente">${escapeHtml(certificate.adminFeedback || '')}</textarea></div>
       </div>
     `).join('');
-
-    container.querySelectorAll('.run-ocr-btn').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const card = button.closest('[data-certificate-id]');
-        const certificateId = card.dataset.certificateId;
-        const current = data.certificates.find((item) => item.id === certificateId);
-        if (!current) return;
-        if (!data.settings.ocrDisponivel) {
-          showMessage('settingsMessage', 'Ative o OCR nas configuracoes antes de processar certificados.', 'error');
-          setActiveSection('configuracoes');
-          return;
-        }
-        button.disabled = true;
-        button.textContent = 'Processando...';
-        try {
-          const result = await window.SIGACOCR.analyzeCertificateData(current.fileData, { expectedName: current.sender?.nome || '' });
-          SIGACStore.saveCertificateOcrResult(user.id, current.id, result);
-          renderAll();
-          setActiveSection('certificados');
-          showMessage('settingsMessage', 'OCR concluido e salvo na fila de certificados.', 'success');
-        } catch (error) {
-          showMessage('settingsMessage', `Falha no OCR: ${error.message}`, 'error');
-        } finally {
-          button.disabled = false;
-          button.textContent = 'Rodar OCR';
-        }
-      });
-    });
-
-    container.querySelectorAll('.approve-cert-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const card = button.closest('[data-certificate-id]');
-        const certificateId = card.dataset.certificateId;
-        const feedback = card.querySelector('.certificate-feedback').value;
-        try {
-          SIGACStore.reviewCertificate(user.id, certificateId, 'aprovado', feedback);
-          renderAll();
-          setActiveSection('certificados');
-        } catch (error) {
-          showMessage('settingsMessage', error.message, 'error');
-        }
-      });
-    });
-
-    container.querySelectorAll('.reject-cert-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const card = button.closest('[data-certificate-id]');
-        const certificateId = card.dataset.certificateId;
-        const feedback = card.querySelector('.certificate-feedback').value;
-        try {
-          SIGACStore.reviewCertificate(user.id, certificateId, 'rejeitado', feedback);
-          renderAll();
-          setActiveSection('certificados');
-        } catch (error) {
-          showMessage('settingsMessage', error.message, 'error');
-        }
-      });
-    });
   }
 
   function renderSettings() {
@@ -299,13 +232,97 @@
       : '<div class="item">Nenhum e-mail simulado registrado.</div>';
   }
 
+  function bindDynamicActions(user) {
+    document.querySelectorAll('.toggle-status').forEach((button) => {
+      button.addEventListener('click', async () => {
+        try {
+          await SIGACStore.updateUserStatus(button.dataset.id, button.dataset.active !== 'true');
+          renderAll(user);
+        } catch (error) {
+          showMessage('userFormMessage', error.message, 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('.run-ocr-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const data = SIGACStore.getAdminDashboardData();
+        const card = button.closest('[data-certificate-id]');
+        const certificateId = card.dataset.certificateId;
+        const current = data.certificates.find((item) => item.id === certificateId);
+        if (!current) return;
+        if (!data.settings.ocrDisponivel) {
+          showMessage('settingsMessage', 'Ative o OCR nas configuracoes antes de processar certificados.', 'error');
+          setActiveSection('configuracoes');
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Processando...';
+        try {
+          const result = await window.SIGACOCR.analyzeCertificateData(current.fileData, { expectedName: current.sender?.nome || '' });
+          await SIGACStore.saveCertificateOcrResult(user.id, current.id, result);
+          renderAll(user);
+          setActiveSection('certificados');
+          showMessage('settingsMessage', 'OCR concluido e salvo na fila de certificados.', 'success');
+        } catch (error) {
+          showMessage('settingsMessage', `Falha no OCR: ${error.message}`, 'error');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Rodar OCR';
+        }
+      });
+    });
+
+    document.querySelectorAll('.approve-cert-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const card = button.closest('[data-certificate-id]');
+        const certificateId = card.dataset.certificateId;
+        const feedback = card.querySelector('.certificate-feedback').value;
+        try {
+          await SIGACStore.reviewCertificate(user.id, certificateId, 'aprovado', feedback);
+          renderAll(user);
+          setActiveSection('certificados');
+        } catch (error) {
+          showMessage('settingsMessage', error.message, 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('.reject-cert-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const card = button.closest('[data-certificate-id]');
+        const certificateId = card.dataset.certificateId;
+        const feedback = card.querySelector('.certificate-feedback').value;
+        try {
+          await SIGACStore.reviewCertificate(user.id, certificateId, 'rejeitado', feedback);
+          renderAll(user);
+          setActiveSection('certificados');
+        } catch (error) {
+          showMessage('settingsMessage', error.message, 'error');
+        }
+      });
+    });
+  }
+
+  function renderAll(user) {
+    populateSharedSelects();
+    renderDashboard();
+    renderUsers();
+    renderCourses();
+    renderOpportunities();
+    renderCertificates();
+    renderSettings();
+    bindDynamicActions(user);
+  }
+
   function setupForms(user) {
-    document.getElementById('userForm').addEventListener('submit', (event) => {
+    document.getElementById('userForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
         const type = document.getElementById('userTypeInput').value;
         const selectedCourses = [...document.getElementById('userCoordinatorCoursesInput').selectedOptions].map((option) => option.value);
-        SIGACStore.createUser({
+        await SIGACStore.createUser({
           nome: document.getElementById('userNameInput').value,
           email: document.getElementById('userEmailInput').value,
           senha: document.getElementById('userPasswordInput').value,
@@ -315,16 +332,16 @@
         });
         document.getElementById('userForm').reset();
         showMessage('userFormMessage', 'Usuario cadastrado com sucesso.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('userFormMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('courseForm').addEventListener('submit', (event) => {
+    document.getElementById('courseForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
-        SIGACStore.createCourse({
+        await SIGACStore.createCourse({
           sigla: document.getElementById('sigla').value,
           nome: document.getElementById('nomeCurso').value,
           area: document.getElementById('areaCurso').value,
@@ -333,103 +350,95 @@
         });
         document.getElementById('courseForm').reset();
         showMessage('courseFormMessage', 'Curso cadastrado com sucesso.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('courseFormMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('studentLinkForm').addEventListener('submit', (event) => {
+    document.getElementById('studentLinkForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
-        SIGACStore.assignStudentToCourse(document.getElementById('studentSelect').value, document.getElementById('studentCourseSelect').value);
+        await SIGACStore.assignStudentToCourse(document.getElementById('studentSelect').value, document.getElementById('studentCourseSelect').value);
         showMessage('studentLinkMessage', 'Vinculo do aluno salvo com sucesso.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('studentLinkMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('coordinatorLinkForm').addEventListener('submit', (event) => {
+    document.getElementById('coordinatorLinkForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
         const selected = [...document.getElementById('coordinatorCoursesSelect').selectedOptions].map((option) => option.value);
-        SIGACStore.assignCoordinatorCourses(document.getElementById('coordinatorSelect').value, selected);
+        await SIGACStore.assignCoordinatorCourses(document.getElementById('coordinatorSelect').value, selected);
         showMessage('coordinatorLinkMessage', 'Vinculos do coordenador atualizados.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('coordinatorLinkMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('opportunityForm').addEventListener('submit', (event) => {
+    document.getElementById('opportunityForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
-        SIGACStore.createOpportunity(user.id, {
+        await SIGACStore.createOpportunity(user.id, {
           titulo: document.getElementById('oppTitle').value,
           descricao: document.getElementById('oppDesc').value,
           horas: document.getElementById('oppHours').value
         });
         document.getElementById('opportunityForm').reset();
         showMessage('opportunityFormMessage', 'Oportunidade lancada com sucesso.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('opportunityFormMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('settingsForm').addEventListener('submit', (event) => {
+    document.getElementById('settingsForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
-        SIGACStore.updateSettings({
+        await SIGACStore.updateSettings({
           horasMetaPadrao: document.getElementById('horasMeta').value,
           emailNotificationsEnabled: document.getElementById('emailToggle').checked,
           ocrDisponivel: document.getElementById('ocrToggle').checked
         });
         showMessage('settingsMessage', 'Configuracoes salvas com sucesso.', 'success');
-        renderAll();
+        renderAll(user);
       } catch (error) {
         showMessage('settingsMessage', error.message, 'error');
       }
     });
 
-    document.getElementById('resetDemoBtn').addEventListener('click', () => {
+    document.getElementById('resetDemoBtn').addEventListener('click', async () => {
       if (!confirm('Deseja resetar os dados de demonstracao?')) return;
-      SIGACStore.resetDemo();
-      SIGACStore.login('einstein@sigac.com', '123456789');
-      renderAll();
-      showMessage('settingsMessage', 'Base de demonstracao restaurada.', 'success');
+      try {
+        await SIGACStore.resetDemo();
+        const freshUser = SIGACStore.getCurrentUser();
+        renderAll(freshUser);
+        showMessage('settingsMessage', 'Base de demonstracao restaurada.', 'success');
+      } catch (error) {
+        showMessage('settingsMessage', error.message, 'error');
+      }
     });
   }
 
-  function renderAll() {
-    populateSharedSelects();
-    renderDashboard();
-    renderUsers();
-    renderCourses();
-    renderOpportunities();
-    renderCertificates(SIGACStore.getCurrentUser());
-    renderSettings();
-  }
-
-  function init() {
-    const user = SIGACStore.requireRole('superadmin');
-    if (!user) {
+  async function init() {
+    try {
+      const user = await SIGACStore.bootstrap('superadmin');
+      document.getElementById('userName').textContent = user.nome;
+      document.querySelectorAll('[data-section]').forEach((button) => {
+        button.addEventListener('click', () => setActiveSection(button.dataset.section));
+      });
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        SIGACStore.logout();
+        window.location.href = 'loginsigac.html';
+      });
+      setupForms(user);
+      renderAll(user);
+    } catch (_) {
       window.location.href = 'loginsigac.html';
-      return;
     }
-
-    document.getElementById('userName').textContent = user.nome;
-    document.querySelectorAll('[data-section]').forEach((button) => {
-      button.addEventListener('click', () => setActiveSection(button.dataset.section));
-    });
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      SIGACStore.logout();
-      window.location.href = 'loginsigac.html';
-    });
-
-    setupForms(user);
-    renderAll();
   }
 
   document.addEventListener('DOMContentLoaded', init);

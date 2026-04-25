@@ -119,33 +119,33 @@
             <div class="actions-row">
               <a class="button secondary" href="${submission.latest?.arquivoData || '#'}" download="${escapeHtml(submission.latest?.arquivoNome || 'arquivo.txt')}">Abrir arquivo enviado</a>
             </div>
-            ${submission.latest?.status === 'em_analise' ? `
-              <form class="evaluation-form" data-submission-id="${submission.id}" style="margin-top:12px;">
-                <div class="field"><label>Feedback</label><textarea name="feedback" placeholder="Comentário para o aluno"></textarea></div>
-                <div class="actions-row">
-                  <button type="button" class="approve-btn success">Aprovar</button>
-                  <button type="button" class="reject-btn danger">Rejeitar</button>
-                </div>
-              </form>
-            ` : `<p class="small"><strong>Feedback:</strong> ${escapeHtml(submission.latest?.feedback || 'Sem observações.')}</p>`}
+            ${submission.latest?.status === 'em_analise'
+              ? `<form class="evaluation-form" data-submission-id="${submission.id}" style="margin-top:12px;">
+                   <div class="field"><label>Feedback</label><textarea name="feedback" placeholder="Comentário para o aluno"></textarea></div>
+                   <div class="actions-row">
+                     <button type="button" class="approve-btn success">Aprovar</button>
+                     <button type="button" class="reject-btn danger">Rejeitar</button>
+                   </div>
+                 </form>`
+              : `<p class="small"><strong>Feedback:</strong> ${escapeHtml(submission.latest?.feedback || 'Sem observações.')}</p>`}
           </div>
         `).join('')
       : '<div class="item">Nenhum envio encontrado.</div>';
 
     container.querySelectorAll('.evaluation-form').forEach((form) => {
       const feedback = () => form.querySelector('textarea').value;
-      form.querySelector('.approve-btn').addEventListener('click', () => {
+      form.querySelector('.approve-btn').addEventListener('click', async () => {
         try {
-          SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'aprovado', feedback());
-          renderAll(user);
+          await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'aprovado', feedback());
+          renderAll(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
         }
       });
-      form.querySelector('.reject-btn').addEventListener('click', () => {
+      form.querySelector('.reject-btn').addEventListener('click', async () => {
         try {
-          SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'rejeitado', feedback());
-          renderAll(user);
+          await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'rejeitado', feedback());
+          renderAll(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
         }
@@ -181,7 +181,7 @@
       }
       try {
         const fileData = await fileToDataUrl(file);
-        SIGACStore.submitCertificate(user.id, {
+        await SIGACStore.submitCertificate(user.id, {
           fileName: file.name,
           fileData,
           observation: document.getElementById('certificateObservation').value,
@@ -189,7 +189,7 @@
         });
         form.reset();
         showMessage('certificateMessage', 'Certificado enviado ao administrador com sucesso.', 'success');
-        renderAll(user);
+        renderAll(SIGACStore.getCurrentUser());
       } catch (error) {
         showMessage('certificateMessage', error.message, 'error');
       }
@@ -214,9 +214,13 @@
       : '<div class="item">Nenhuma oportunidade aberta.</div>';
 
     container.querySelectorAll('.toggle-opp').forEach((button) => {
-      button.addEventListener('click', () => {
-        SIGACStore.toggleOpportunity(user.id, button.dataset.id);
-        renderAll(user);
+      button.addEventListener('click', async () => {
+        try {
+          await SIGACStore.toggleOpportunity(user.id, button.dataset.id);
+          renderAll(SIGACStore.getCurrentUser());
+        } catch (error) {
+          alert(error.message);
+        }
       });
     });
   }
@@ -240,7 +244,7 @@
       }
 
       try {
-        SIGACStore.createActivity(user.id, {
+        await SIGACStore.createActivity(user.id, {
           titulo: document.getElementById('titulo').value,
           descricao: document.getElementById('descricao').value,
           courseId: document.getElementById('courseId').value,
@@ -251,8 +255,9 @@
         });
         form.reset();
         showMessage('activityMessage', 'Atividade publicada com sucesso.', 'success');
-        populateCourseSelects(SIGACStore.getCurrentUser());
-        renderAll(SIGACStore.getCurrentUser());
+        const freshUser = SIGACStore.getCurrentUser();
+        populateCourseSelects(freshUser);
+        renderAll(freshUser);
       } catch (error) {
         showMessage('activityMessage', error.message, 'error');
       }
@@ -267,28 +272,25 @@
     renderOpportunities(user);
   }
 
-  function init() {
-    const user = SIGACStore.requireRole('coordenador');
-    if (!user) {
+  async function init() {
+    try {
+      const user = await SIGACStore.bootstrap('coordenador');
+      document.getElementById('userName').textContent = user.nome;
+      document.getElementById('userRole').textContent = 'Coordenador';
+      populateCourseSelects(user);
+      setupActivityForm(user);
+      setupCertificateForm(user);
+      document.querySelectorAll('[data-section]').forEach((button) => {
+        button.addEventListener('click', () => setActiveSection(button.dataset.section));
+      });
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        SIGACStore.logout();
+        window.location.href = 'loginsigac.html';
+      });
+      renderAll(user);
+    } catch (_) {
       window.location.href = 'loginsigac.html';
-      return;
     }
-
-    document.getElementById('userName').textContent = user.nome;
-    document.getElementById('userRole').textContent = 'Coordenador';
-    populateCourseSelects(user);
-    setupActivityForm(user);
-    setupCertificateForm(user);
-
-    document.querySelectorAll('[data-section]').forEach((button) => {
-      button.addEventListener('click', () => setActiveSection(button.dataset.section));
-    });
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      SIGACStore.logout();
-      window.location.href = 'loginsigac.html';
-    });
-
-    renderAll(user);
   }
 
   document.addEventListener('DOMContentLoaded', init);

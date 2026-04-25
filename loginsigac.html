@@ -10,31 +10,69 @@
   <div class="container-login">
     <div class="login-card">
       <h1>SIGAC</h1>
-      <p>Sistema Integrado de Gestão de Atividades Complementares</p>
+      <p>Sistema Integrado de Gestao de Atividades Complementares</p>
 
-      <form id="loginForm">
-        <div class="field">
-          <label for="email">E-mail</label>
-          <input id="email" type="email" placeholder="Digite seu e-mail" required>
-        </div>
-
-        <div class="field">
-          <label for="senha">Senha</label>
-          <input id="senha" type="password" placeholder="Digite sua senha" required>
-        </div>
-
-        <button type="submit" class="btn-login">Entrar</button>
-      </form>
-
-      <!----<div class="notice small" style="margin-top:16px;">
-        Contas de demonstração: admin <strong>einstein@sigac.com</strong> / <strong>123456789</strong>, coordenador <strong>coord.ads@sigac.com</strong> / <strong>123456</strong>, aluno <strong>aluno.ads@sigac.com</strong> / <strong>123456</strong>.
-      </div>---->
-
-      <div class="login-footer">
-        <a href="resetarsenha.html">Esqueci minha senha</a>
+      <div class="auth-tabs" role="tablist" aria-label="Acesso ao SIGAC">
+        <button type="button" class="auth-tab active" data-auth-target="loginPanel">Entrar</button>
+        <button type="button" class="auth-tab" data-auth-target="registerPanel">Cadastrar</button>
       </div>
 
-      <div id="loginMessage" class="message info hidden"></div>
+      <section id="loginPanel" class="auth-panel">
+        <form id="loginForm">
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" placeholder="Digite seu e-mail" required>
+          </div>
+
+          <div class="field">
+            <label for="senha">Senha</label>
+            <input id="senha" type="password" placeholder="Digite sua senha" required>
+          </div>
+
+          <button type="submit" class="btn-login">Entrar</button>
+        </form>
+
+        <div class="login-footer">
+          <a href="resetarsenha.html">Esqueci minha senha</a>
+        </div>
+
+        <div id="loginMessage" class="message info hidden"></div>
+      </section>
+
+      <section id="registerPanel" class="auth-panel hidden">
+        <form id="registerForm">
+          <div class="field">
+            <label for="registerName">Nome completo</label>
+            <input id="registerName" type="text" placeholder="Digite seu nome" required>
+          </div>
+
+          <div class="field">
+            <label for="registerEmail">E-mail</label>
+            <input id="registerEmail" type="email" placeholder="Digite seu e-mail" required>
+          </div>
+
+          <div class="field">
+            <label for="registerCourse">Curso</label>
+            <select id="registerCourse" required>
+              <option value="">Carregando cursos...</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="registerPassword">Senha</label>
+            <input id="registerPassword" type="password" placeholder="Crie uma senha" minlength="6" required>
+          </div>
+
+          <div class="field">
+            <label for="registerPasswordConfirm">Confirmar senha</label>
+            <input id="registerPasswordConfirm" type="password" placeholder="Repita a senha" minlength="6" required>
+          </div>
+
+          <button type="submit" class="btn-login">Criar cadastro</button>
+        </form>
+
+        <div id="registerMessage" class="message info hidden"></div>
+      </section>
     </div>
   </div>
 

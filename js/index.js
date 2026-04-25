@@ -41,7 +41,8 @@
     }[status] || 'em_analise';
   }
 
-  function renderNotifications(user) {
+  function renderNotifications() {
+    const user = SIGACStore.getCurrentUser();
     const container = document.getElementById('notificationsList');
     const notifications = SIGACStore.listNotificationsForUser(user.id);
     document.getElementById('notifCount').style.display = notifications.length ? 'inline-block' : 'none';
@@ -58,8 +59,6 @@
         <span class="small">${formatDate(item.createdAt)}</span>
       </div>
     `).join('');
-
-    SIGACStore.markNotificationsAsRead(user.id);
   }
 
   function renderDashboard(user) {
@@ -86,7 +85,6 @@
     document.getElementById('progressBar').style.width = `${progress.percent}%`;
     document.getElementById('progressText').textContent = `${progress.total} de ${progress.target} horas (${progress.percent}%)`;
     document.getElementById('hoursBreakdown').textContent = `Atividades aprovadas: ${progress.approvedHours}h | Oportunidades inscritas: ${progress.opportunityHours}h | Certificados aprovados: ${progress.certificateHours}h`;
-
     document.getElementById('submissionSummary').innerHTML = `
       <ul style="list-style:none; padding:0; margin:0;">
         <li>✅ Aprovados: <strong>${approved}</strong></li>
@@ -141,14 +139,14 @@
         }
         try {
           const dataUrl = await fileToDataUrl(file);
-          SIGACStore.submitActivityProof(user.id, {
+          await SIGACStore.submitActivityProof(user.id, {
             activityId: form.dataset.activityId,
             arquivoNome: file.name,
             arquivoData: dataUrl,
             observacao: form.querySelector('textarea').value
           });
+          renderAll(SIGACStore.getCurrentUser());
           alert('Arquivo enviado para análise.');
-          renderAll(user);
         } catch (error) {
           alert(error.message);
         }
@@ -184,7 +182,7 @@
       }
       try {
         const fileData = await fileToDataUrl(file);
-        SIGACStore.submitCertificate(user.id, {
+        await SIGACStore.submitCertificate(user.id, {
           fileName: file.name,
           fileData,
           observation: document.getElementById('certificateObservation').value,
@@ -192,7 +190,7 @@
         });
         form.reset();
         showMessage('certificateMessage', 'Certificado enviado ao administrador com sucesso.', 'success');
-        renderAll(user);
+        renderAll(SIGACStore.getCurrentUser());
       } catch (error) {
         showMessage('certificateMessage', error.message, 'error');
       }
@@ -220,39 +218,41 @@
     }).join('');
 
     container.querySelectorAll('.opportunity-toggle').forEach((button) => {
-      button.addEventListener('click', () => {
-        SIGACStore.toggleOpportunity(user.id, button.dataset.id);
-        renderAll(user);
+      button.addEventListener('click', async () => {
+        try {
+          await SIGACStore.toggleOpportunity(user.id, button.dataset.id);
+          renderAll(SIGACStore.getCurrentUser());
+        } catch (error) {
+          alert(error.message);
+        }
       });
     });
   }
 
   function renderAll(user) {
-    renderNotifications(user);
+    renderNotifications();
     renderDashboard(user);
     renderActivities(user);
     renderCertificates(user);
     renderOpportunities(user);
   }
 
-  function init() {
-    const user = SIGACStore.requireRole('aluno');
-    if (!user) {
+  async function init() {
+    try {
+      const user = await SIGACStore.bootstrap('aluno');
+      document.querySelectorAll('[data-section]').forEach((button) => {
+        button.addEventListener('click', () => setActiveSection(button.dataset.section));
+      });
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        SIGACStore.logout();
+        window.location.href = 'loginsigac.html';
+      });
+      setupCertificateForm(user);
+      renderAll(user);
+      SIGACStore.markNotificationsAsRead().catch(() => {});
+    } catch (_) {
       window.location.href = 'loginsigac.html';
-      return;
     }
-
-    document.querySelectorAll('[data-section]').forEach((button) => {
-      button.addEventListener('click', () => setActiveSection(button.dataset.section));
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      SIGACStore.logout();
-      window.location.href = 'loginsigac.html';
-    });
-
-    setupCertificateForm(user);
-    renderAll(user);
   }
 
   document.addEventListener('DOMContentLoaded', init);

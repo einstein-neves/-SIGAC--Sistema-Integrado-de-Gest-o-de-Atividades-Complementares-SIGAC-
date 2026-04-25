@@ -1,0 +1,926 @@
+{
+  "exportedAt": "2026-04-23T02:03:56.844Z",
+  "database": {
+    "database": "neondb",
+    "username": "neondb_owner",
+    "version": "PostgreSQL 17.8 (130b160) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit"
+  },
+  "tables": [
+    "activities",
+    "coordinator_courses",
+    "courses",
+    "emails",
+    "notifications",
+    "opportunities",
+    "opportunity_registrations",
+    "playing_with_neon",
+    "sessions",
+    "settings",
+    "submission_versions",
+    "submissions",
+    "users"
+  ],
+  "counts": {
+    "activities": 2,
+    "coordinator_courses": 2,
+    "courses": 3,
+    "emails": 0,
+    "notifications": 2,
+    "opportunities": 2,
+    "opportunity_registrations": 3,
+    "playing_with_neon": 40,
+    "sessions": 5,
+    "settings": 4,
+    "submission_versions": 1,
+    "submissions": 1,
+    "users": 6
+  },
+  "schema": {
+    "activities": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "titulo",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "descricao",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "course_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "horas",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "prazo",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "material_nome",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "material_arquivo",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "coordinator_courses": [
+      {
+        "column_name": "user_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "course_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "courses": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "sigla",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "nome",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "area",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "turno",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "horas_meta",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "120"
+      }
+    ],
+    "emails": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "to_email",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "subject",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "body",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "kind",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "notifications": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "mensagem",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "tipo",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "read",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "0"
+      }
+    ],
+    "opportunities": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "titulo",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "descricao",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "horas",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "criado_por",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "criado_em",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "opportunity_registrations": [
+      {
+        "column_name": "opportunity_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "playing_with_neon": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('playing_with_neon_id_seq'::regclass)"
+      },
+      {
+        "column_name": "name",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "value",
+        "data_type": "real",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "sessions": [
+      {
+        "column_name": "token",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "settings": [
+      {
+        "column_name": "key",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "value",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ],
+    "submission_versions": [
+      {
+        "column_name": "id",
+        "data_type": "bigint",
+        "is_nullable": "NO",
+        "column_default": "nextval('submission_versions_id_seq'::regclass)"
+      },
+      {
+        "column_name": "submission_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "arquivo_nome",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "arquivo_data",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "observacao",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "status",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "feedback",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "enviada_em",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "avaliada_em",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "submissions": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "activity_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "student_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "current_status",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": "'em_analise'::text"
+      }
+    ],
+    "users": [
+      {
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "nome",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "email",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "senha_hash",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "tipo",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "ativo",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
+        "column_name": "course_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      }
+    ]
+  },
+  "data": {
+    "activities": [
+      {
+        "id": "activity_ads_1",
+        "titulo": "Seminário sobre Arquitetura de Software",
+        "descricao": "Preparar um resumo crítico e enviar o comprovante de participação.",
+        "course_id": "course_ads",
+        "horas": 12,
+        "prazo": "",
+        "material_nome": "roteiro-seminario.txt",
+        "material_arquivo": "data:text/plain;base64,Um90ZWlybyBkbyBzZW1pbsOhcmlvIGRlIEFycXVpdGV0dXJhIGRlIFNvZnR3YXJlLgoKMS4gTGVpYSBvIG1hdGVyaWFsIGJhc2UuCjIuIFBhcnRpY2lwZSBkbyBlbmNvbnRyby4KMy4gRW52aWUgbyBjb21wcm92YW50ZS4=",
+        "created_by": "user_coord_ads",
+        "created_at": "2026-04-16T00:10:29.797Z"
+      },
+      {
+        "id": "activity_log_1",
+        "titulo": "Relatório de Visita Técnica",
+        "descricao": "Enviar relatório da visita técnica com no mínimo duas páginas.",
+        "course_id": "course_log",
+        "horas": 10,
+        "prazo": "",
+        "material_nome": "modelo-relatorio.txt",
+        "material_arquivo": "data:text/plain;base64,TW9kZWxvIGRlIHJlbGF0w7NyaW8gZGEgdmlzaXRhIHTDqWNuaWNhIGRlIExvZ8Otc3RpY2Eu",
+        "created_by": "user_coord_log",
+        "created_at": "2026-04-16T00:10:29.803Z"
+      }
+    ],
+    "coordinator_courses": [
+      {
+        "user_id": "user_coord_ads",
+        "course_id": "course_ads"
+      },
+      {
+        "user_id": "user_coord_log",
+        "course_id": "course_log"
+      }
+    ],
+    "courses": [
+      {
+        "id": "course_ads",
+        "sigla": "ADS",
+        "nome": "Análise e Desenvolvimento de Sistemas",
+        "area": "Tecnologia",
+        "turno": "Noite",
+        "horas_meta": 120
+      },
+      {
+        "id": "course_log",
+        "sigla": "LOG",
+        "nome": "Logística",
+        "area": "Gestão",
+        "turno": "Tarde",
+        "horas_meta": 100
+      },
+      {
+        "id": "course_rh",
+        "sigla": "RH",
+        "nome": "Recursos Humanos",
+        "area": "Gestão",
+        "turno": "Noite",
+        "horas_meta": 90
+      }
+    ],
+    "emails": [],
+    "notifications": [
+      {
+        "id": "ntf_mo0q3pz2_1w3um0",
+        "user_id": "user_aluno_ads",
+        "mensagem": "Você já está inscrita no minicurso de Git e GitHub.",
+        "tipo": "info",
+        "created_at": "2026-04-16T00:10:29.822Z",
+        "read": 0
+      },
+      {
+        "id": "ntf_mo0q3pz8_vbrpfw",
+        "user_id": "user_coord_ads",
+        "mensagem": "Há um envio pendente para análise em ADS.",
+        "tipo": "warning",
+        "created_at": "2026-04-16T00:10:29.828Z",
+        "read": 0
+      }
+    ],
+    "opportunities": [
+      {
+        "id": "opp_1",
+        "titulo": "Minicurso de Git e GitHub",
+        "descricao": "Oficina prática com certificado institucional.",
+        "horas": 8,
+        "criado_por": "user_admin",
+        "criado_em": "2026-04-16T00:10:29.764Z"
+      },
+      {
+        "id": "opp_2",
+        "titulo": "Feira de Empregabilidade SENAC",
+        "descricao": "Participação com horas complementares para alunos e coordenação.",
+        "horas": 6,
+        "criado_por": "user_admin",
+        "criado_em": "2026-04-16T00:10:29.768Z"
+      }
+    ],
+    "opportunity_registrations": [
+      {
+        "opportunity_id": "opp_1",
+        "user_id": "user_aluno_ads"
+      },
+      {
+        "opportunity_id": "opp_2",
+        "user_id": "user_coord_ads"
+      },
+      {
+        "opportunity_id": "opp_2",
+        "user_id": "user_aluno_log"
+      }
+    ],
+    "playing_with_neon": [
+      {
+        "id": 1,
+        "name": "c4ca4238a0",
+        "value": 0.4246865
+      },
+      {
+        "id": 2,
+        "name": "c81e728d9d",
+        "value": 0.17047538
+      },
+      {
+        "id": 3,
+        "name": "eccbc87e4b",
+        "value": 0.26577368
+      },
+      {
+        "id": 4,
+        "name": "a87ff679a2",
+        "value": 0.65108323
+      },
+      {
+        "id": 5,
+        "name": "e4da3b7fbb",
+        "value": 0.1546093
+      },
+      {
+        "id": 6,
+        "name": "1679091c5a",
+        "value": 0.20043994
+      },
+      {
+        "id": 7,
+        "name": "8f14e45fce",
+        "value": 0.8272687
+      },
+      {
+        "id": 8,
+        "name": "c9f0f895fb",
+        "value": 0.2113282
+      },
+      {
+        "id": 9,
+        "name": "45c48cce2e",
+        "value": 0.9116415
+      },
+      {
+        "id": 10,
+        "name": "d3d9446802",
+        "value": 0.64130807
+      },
+      {
+        "id": 11,
+        "name": "c4ca4238a0",
+        "value": 0.7642373
+      },
+      {
+        "id": 12,
+        "name": "c81e728d9d",
+        "value": 0.76582026
+      },
+      {
+        "id": 13,
+        "name": "eccbc87e4b",
+        "value": 0.08607705
+      },
+      {
+        "id": 14,
+        "name": "a87ff679a2",
+        "value": 0.48712987
+      },
+      {
+        "id": 15,
+        "name": "e4da3b7fbb",
+        "value": 0.026576787
+      },
+      {
+        "id": 16,
+        "name": "1679091c5a",
+        "value": 0.23575513
+      },
+      {
+        "id": 17,
+        "name": "8f14e45fce",
+        "value": 0.52354795
+      },
+      {
+        "id": 18,
+        "name": "c9f0f895fb",
+        "value": 0.98581165
+      },
+      {
+        "id": 19,
+        "name": "45c48cce2e",
+        "value": 0.23111233
+      },
+      {
+        "id": 20,
+        "name": "d3d9446802",
+        "value": 0.5089721
+      },
+      {
+        "id": 21,
+        "name": "c4ca4238a0",
+        "value": 0.24609767
+      },
+      {
+        "id": 22,
+        "name": "c81e728d9d",
+        "value": 0.9672558
+      },
+      {
+        "id": 23,
+        "name": "eccbc87e4b",
+        "value": 0.78502244
+      },
+      {
+        "id": 24,
+        "name": "a87ff679a2",
+        "value": 0.02455885
+      },
+      {
+        "id": 25,
+        "name": "e4da3b7fbb",
+        "value": 0.47194076
+      },
+      {
+        "id": 26,
+        "name": "1679091c5a",
+        "value": 0.7191948
+      },
+      {
+        "id": 27,
+        "name": "8f14e45fce",
+        "value": 0.30451784
+      },
+      {
+        "id": 28,
+        "name": "c9f0f895fb",
+        "value": 0.14057523
+      },
+      {
+        "id": 29,
+        "name": "45c48cce2e",
+        "value": 0.91889983
+      },
+      {
+        "id": 30,
+        "name": "d3d9446802",
+        "value": 0.8638814
+      },
+      {
+        "id": 31,
+        "name": "c4ca4238a0",
+        "value": 0.35891035
+      },
+      {
+        "id": 32,
+        "name": "c81e728d9d",
+        "value": 0.3712312
+      },
+      {
+        "id": 33,
+        "name": "eccbc87e4b",
+        "value": 0.5320512
+      },
+      {
+        "id": 34,
+        "name": "a87ff679a2",
+        "value": 0.49740192
+      },
+      {
+        "id": 35,
+        "name": "e4da3b7fbb",
+        "value": 0.47737494
+      },
+      {
+        "id": 36,
+        "name": "1679091c5a",
+        "value": 0.3002999
+      },
+      {
+        "id": 37,
+        "name": "8f14e45fce",
+        "value": 0.4458178
+      },
+      {
+        "id": 38,
+        "name": "c9f0f895fb",
+        "value": 0.3101808
+      },
+      {
+        "id": 39,
+        "name": "45c48cce2e",
+        "value": 0.81517696
+      },
+      {
+        "id": 40,
+        "name": "d3d9446802",
+        "value": 0.0016736842
+      }
+    ],
+    "sessions": [
+      {
+        "token": "251787bdaa06f2afbeac29f897a35a476ec03379ab95cd24",
+        "user_id": "user_admin",
+        "created_at": "2026-04-23T00:31:25.199Z"
+      },
+      {
+        "token": "ced101940df43eaf328141368fa1ea79a216a7434c7e3943",
+        "user_id": "user_admin",
+        "created_at": "2026-04-23T00:31:33.362Z"
+      },
+      {
+        "token": "65c274ac91cb69728b38fccf3e9e592505fe9d889b57e84c",
+        "user_id": "user_admin",
+        "created_at": "2026-04-23T00:37:04.044Z"
+      },
+      {
+        "token": "041168398b80e8b60784a3e523f9a39675c3d3b744b9a886",
+        "user_id": "user_admin",
+        "created_at": "2026-04-23T00:48:42.050Z"
+      },
+      {
+        "token": "4e4657784e34ae3f0c0efe649e44e14ea63cc113d4a139b7",
+        "user_id": "user_admin",
+        "created_at": "2026-04-23T00:58:12.392Z"
+      }
+    ],
+    "settings": [
+      {
+        "key": "horasMetaPadrao",
+        "value": "120"
+      },
+      {
+        "key": "emailNotificationsEnabled",
+        "value": "true"
+      },
+      {
+        "key": "ocrDisponivel",
+        "value": "false"
+      },
+      {
+        "key": "updatedAt",
+        "value": "2026-04-16T00:10:29.003Z"
+      }
+    ],
+    "submission_versions": [
+      {
+        "id": "1",
+        "submission_id": "sub_1",
+        "version": 1,
+        "arquivo_nome": "comprovante-joao.txt",
+        "arquivo_data": "data:text/plain;base64,Q29tcHJvdmFudGUgZGUgcGFydGljaXBhw6fDo28gZG8gSm/Do28gUGVkcm8u",
+        "observacao": "Segue meu comprovante.",
+        "status": "em_analise",
+        "feedback": "",
+        "enviada_em": "2026-04-16T00:10:29.815Z",
+        "avaliada_em": ""
+      }
+    ],
+    "submissions": [
+      {
+        "id": "sub_1",
+        "activity_id": "activity_ads_1",
+        "student_id": "user_aluno_ads_2",
+        "current_status": "em_analise"
+      }
+    ],
+    "users": [
+      {
+        "id": "user_admin",
+        "nome": "Einstein",
+        "email": "einstein@sigac.com",
+        "senha_hash": "57dc8497a777ee2f560d0d4c5baff3f3:41efc70d565d7b8ed4265099e8421ca15b230e8dc4b0c4f43bb05517bea4b080f99b79cb9b2278168c5221b44b275982bf88078e69584a84d70e212b64a0fd90",
+        "tipo": "superadmin",
+        "ativo": 1,
+        "course_id": null,
+        "created_at": "2026-04-16T00:10:29.178Z"
+      },
+      {
+        "id": "user_coord_ads",
+        "nome": "Marina Costa",
+        "email": "coord.ads@sigac.com",
+        "senha_hash": "23d0ea751be4fe327e74d8a29f0d68a0:826683c13aa5e0cdcb1feedd6a862f7c17d44f1a3b52f408c2ff3364d86f1d7517abb49129d661825a857e03e62075cc5bdbd504d0bf281d295f0af00f84f55a",
+        "tipo": "coordenador",
+        "ativo": 1,
+        "course_id": null,
+        "created_at": "2026-04-16T00:10:29.276Z"
+      },
+      {
+        "id": "user_coord_log",
+        "nome": "Paulo Nobre",
+        "email": "coord.log@sigac.com",
+        "senha_hash": "8d3c7f0fc5ec0ca4543da962af6e7327:59662d1b3aaac750468879fd07e084582ca7724e5acd8a746ed2a811746185f02c714aa0d61871ca9bdba5cf60b3a37ee1ad45c97c1ae503f3a7411398f1f4df",
+        "tipo": "coordenador",
+        "ativo": 1,
+        "course_id": null,
+        "created_at": "2026-04-16T00:10:29.394Z"
+      },
+      {
+        "id": "user_aluno_ads",
+        "nome": "Ana Clara",
+        "email": "aluno.ads@sigac.com",
+        "senha_hash": "cbab0186c7718f36f06fcef91cb328fa:8509cc139be783dcc25a66d73d80f2e67b423fddba129f9ea64649eabee000774e06fd0b1617f92445bd88a8b0cce76ea9bcf397047bc8f2fd9d340a27a1ca89",
+        "tipo": "aluno",
+        "ativo": 1,
+        "course_id": "course_ads",
+        "created_at": "2026-04-16T00:10:29.504Z"
+      },
+      {
+        "id": "user_aluno_ads_2",
+        "nome": "João Pedro",
+        "email": "aluno.ads2@sigac.com",
+        "senha_hash": "24fbc2f3acfe376fde8836502a59d6e1:0edf6bdbe2142492669b35907fab3f0eb5224cf40ac36e23d6cdd0b5efb211b1286a8d00f6ab2059738597f92e231582d0bfa4d7b4245f0ac1a01eefb7d97f6c",
+        "tipo": "aluno",
+        "ativo": 1,
+        "course_id": "course_ads",
+        "created_at": "2026-04-16T00:10:29.618Z"
+      },
+      {
+        "id": "user_aluno_log",
+        "nome": "Lívia Souza",
+        "email": "aluno.log@sigac.com",
+        "senha_hash": "840fbfe16200a0f7b89737d269b9ea2f:44d89a7ffc8f5d7a08c92343efe5872aa327fb50b17c5a9d3ad4d47298784dc00b76403f787a4d5b78841ceb0f084da924cbfdae46aaed4182610aac8d00881b",
+        "tipo": "aluno",
+        "ativo": 1,
+        "course_id": "course_log",
+        "created_at": "2026-04-16T00:10:29.745Z"
+      }
+    ]
+  }
+}
