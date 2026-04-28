@@ -9,7 +9,7 @@ function getSslConfig(databaseUrl) {
     || /(?:^|[?&])ssl=(true|1)/i.exec(databaseUrl)?.[1]?.toLowerCase();
   if (['false', '0', 'disable', 'off'].includes(urlValue || '')) return false;
   if (['true', '1', 'require', 'on', 'verify-full', 'verify-ca', 'prefer'].includes(urlValue || '')) {
-    return { rejectUnauthorized: false };
+    return { rejectUnauthorized: true };
   }
   return undefined;
 }

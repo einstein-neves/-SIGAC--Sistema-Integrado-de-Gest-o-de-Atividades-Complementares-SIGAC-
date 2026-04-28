@@ -4,22 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGAC - Aluno</title>
-  <link rel="stylesheet" href="sigac.css">
+  <link rel="icon" type="image/png" href="Logo SIGAC-otimizada.png">
+  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
 </head>
 <body>
+<header class="console-header">
+  <div class="console-brand">
+    <img src="Logo SIGAC.png" alt="Logo SIGAC">
+    <span class="brand-slash">/</span>
+    <strong>SIGAC</strong>
+  </div>
+  <div class="console-context" aria-label="Contexto da tela">
+    <span>Área do Aluno</span>
+    <strong>Painel do Aluno</strong>
+  </div>
+  <div class="console-actions">
+    <span class="status-pill"><span></span>Aluno</span>
+    <button type="button" class="header-button" data-section-jump="certificados" aria-label="Abrir certificados">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v11H4V4Zm2 2v7h12V6H6Zm3 3h6V7H9v2Zm7 7 2 1.2 2-1.2V22l-2-1.2-2 1.2v-6Zm-10 0h8v2H6v-2Z"/></svg>
+      <span>Certificados</span>
+    </button>
+    <button type="button" class="header-button light" data-section-jump="oportunidades" aria-label="Abrir oportunidades">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 5.7 3.2L12 10.7 6.3 7.5 12 4.3ZM5 9.2l6 3.4v6.7l-6-3.4V9.2Zm8 10.1v-6.7l6-3.4v6.7l-6 3.4Z"/></svg>
+      <span>Explorar</span>
+    </button>
+  </div>
+</header>
+
 <div class="layout">
   <aside class="sidebar">
-    <div class="brand"><h2>SIGAC</h2><p>Aluno</p></div>
-    <div class="user-box">
-      <strong id="userName">Carregando...</strong>
-      <span id="userRole">Aluno</span>
+    <svg class="sidebar-icons" aria-hidden="true">
+      <symbol id="icon-dashboard" viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></symbol>
+      <symbol id="icon-activities" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2Zm2 5h8V6H8v2Zm0 5h8v-2H8v2Zm0 4h5v-2H8v2Z"/></symbol>
+      <symbol id="icon-certificate" viewBox="0 0 24 24"><path d="M4 4h16v11H4V4Zm2 2v7h12V6H6Zm3 3h6V7H9v2Zm7 7 2 1.2 2-1.2V22l-2-1.2-2 1.2v-6Zm-10 0h8v2H6v-2Z"/></symbol>
+      <symbol id="icon-opportunities" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 5.7 3.2L12 10.7 6.3 7.5 12 4.3ZM5 9.2l6 3.4v6.7l-6-3.4V9.2Zm8 10.1v-6.7l6-3.4v6.7l-6 3.4Z"/></symbol>
+    </svg>
+
+    <div class="sidebar-section-label">Organização</div>
+    <div class="user-box" role="button" tabindex="0" aria-label="Perfil do aluno">
+      <span id="userInitial" class="org-avatar" aria-hidden="true">A</span>
+      <span class="org-copy">
+        <strong id="userName">Carregando...</strong>
+        <span id="userRole">Aluno</span>
+      </span>
+      <span class="org-chevron" aria-hidden="true"></span>
     </div>
+
     <nav class="menu">
-      <button data-section="dashboard" class="active">Dashboard <span id="notifCount" style="display:none;">0</span></button>
-      <button data-section="atividades">Atividades</button>
-      <button data-section="certificados">Certificados</button>
-      <button data-section="oportunidades">Oportunidades</button>
+      <div class="menu-group-label">Visão geral</div>
+      <button data-section="dashboard" class="active"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span>Dashboard <strong id="notifCount" style="display:none;">0</strong></span></button>
+      <div class="menu-group-label">Fluxo</div>
+      <button data-section="atividades"><svg class="nav-icon"><use href="#icon-activities"></use></svg><span>Atividades</span></button>
+      <button data-section="certificados"><svg class="nav-icon"><use href="#icon-certificate"></use></svg><span>Certificados</span></button>
+      <button data-section="oportunidades"><svg class="nav-icon"><use href="#icon-opportunities"></use></svg><span>Oportunidades</span></button>
     </nav>
+
     <button id="logoutBtn" class="logout">Sair</button>
   </aside>
 
@@ -29,67 +68,223 @@
         <h1>Painel do Aluno</h1>
         <p id="courseInfo">Buscando informações do curso...</p>
       </div>
+      <div class="topbar-actions topbar-actions-student">
+        <div class="field compact">
+          <label for="activeCourseSelect">Curso ativo</label>
+          <select id="activeCourseSelect"></select>
+        </div>
+        <button type="button" class="secondary" data-section-jump="certificados">Novo envio</button>
+        <button type="button" class="secondary" data-section-jump="oportunidades">Explorar mural</button>
+      </div>
     </div>
 
     <section id="dashboard" class="panel-section">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Notificações</h2>
-          <div id="notificationsList" class="list"></div>
+      <div class="dashboard-shell">
+        <div class="dashboard-hero card accent-card">
+          <div class="dashboard-hero-copy">
+            <span class="eyebrow">Visão geral</span>
+            <h2>Sua jornada de horas complementares</h2>
+            <p id="dashboardLead" class="small">Acompanhe sua meta, os envios em andamento e as próximas etapas para concluir suas horas.</p>
+            <div id="heroHighlights" class="dashboard-kpis"></div>
+          </div>
+          <div class="dashboard-hero-progress">
+            <div class="dashboard-progress-ring" aria-hidden="true">
+              <div class="dashboard-progress-ring-inner">
+                <strong id="progressPercent">0%</strong>
+                <span>Concluído</span>
+              </div>
+            </div>
+            <div class="dashboard-progress-details">
+              <div class="dashboard-progress-head">
+                <h3>Progresso da meta</h3>
+                <span id="progressBadge" class="badge">0h restantes</span>
+              </div>
+              <div class="progress dashboard-progress-bar"><span id="progressBar" style="width:0%"></span></div>
+              <p id="progressText" class="small">0 de 0 horas</p>
+              <div id="hoursBreakdown" class="summary-chips"></div>
+            </div>
+          </div>
         </div>
-        <div class="card">
-          <h2>Resumo dos envios</h2>
-          <div id="submissionSummary"></div>
+
+        <div id="metricsGrid" class="grid metrics dashboard-metrics"></div>
+
+        <div class="dual-grid dashboard-overview">
+          <div class="card accent-card accent-card--warning">
+            <div class="dashboard-section-head">
+              <div>
+                <span class="eyebrow">Prioridades</span>
+                <h2>Próximas ações</h2>
+              </div>
+              <span id="actionsCount" class="badge">0 itens</span>
+            </div>
+            <div id="upcomingActions" class="dashboard-actions-list"></div>
+          </div>
+          <div class="card accent-card accent-card--info">
+            <div class="dashboard-section-head">
+              <div>
+                <span class="eyebrow">Envios</span>
+                <h2>Resumo dos envios</h2>
+              </div>
+            </div>
+            <div id="submissionSummary"></div>
+          </div>
         </div>
-      </div>
 
-      <div id="metricsGrid" class="grid metrics" style="margin-top:18px;"></div>
-
-      <div class="card" style="margin-top:18px;">
-        <h2>Progresso de horas complementares</h2>
-        <div class="progress"><span id="progressBar" style="width:0%"></span></div>
-        <p id="progressText" class="small">0 de 0 horas</p>
-        <p id="hoursBreakdown" class="small"></p>
+        <div class="card accent-card accent-card--info">
+          <div class="dashboard-section-head">
+            <div>
+              <span class="eyebrow">Central</span>
+              <h2>Notificações</h2>
+            </div>
+            <span id="notificationsBadge" class="badge">0 novas</span>
+          </div>
+          <div id="notificationsList" class="dashboard-notifications"></div>
+        </div>
       </div>
     </section>
 
     <section id="atividades" class="panel-section hidden">
-      <div class="card">
+      <div class="hidden">
+        <div>
+          <h2>Oportunidades disponíveis</h2>
+          <p>Participe de eventos e ações que contam como horas complementares.</p>
+        </div>
+        <div class="opportunity-summary"></div>
+      </div>
+      <div class="card accent-card">
         <h2>Atividades do meu curso</h2>
+        <div id="activitySummaryGrid" class="grid metrics activity-summary-grid"></div>
+        <div class="filters-bar activity-filters">
+          <label class="activity-search-box" for="activitySearchInput">
+            <span aria-hidden="true">/</span>
+            <input id="activitySearchInput" type="search" placeholder="Buscar atividade...">
+          </label>
+          <div class="activity-status-tabs" role="group" aria-label="Filtrar atividades por status">
+            <button type="button" class="active" data-activity-status="todos">Todas</button>
+            <button type="button" data-activity-status="sem_envio">Sem envio</button>
+            <button type="button" data-activity-status="em_analise">Em análise</button>
+            <button type="button" data-activity-status="aprovado">Aprovadas</button>
+            <button type="button" data-activity-status="rejeitado">Reprovadas</button>
+          </div>
+          <div class="activity-filter-side">
+            <select id="activitySortFilter">
+              <option value="prazo">Ordenar por prazo</option>
+              <option value="horas">Ordenar por horas</option>
+              <option value="titulo">Ordenar por título</option>
+            </select>
+            <button type="button" id="activityClearFilters" class="secondary">Limpar</button>
+          </div>
+        </div>
+        <p id="activityFilterResult" class="small activity-filter-result"></p>
         <div id="activitiesList" class="list"></div>
       </div>
     </section>
 
-
     <section id="certificados" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Enviar certificado ao admin</h2>
+      <div class="certificate-header">
+        <div>
+          <h2>Certificados</h2>
+          <p>Envie certificados externos para análise e acompanhe a validação das horas.</p>
+        </div>
+        <div id="certificateSummaryGrid" class="certificate-summary-grid"></div>
+      </div>
+      <div class="dual-grid certificate-workspace">
+        <div class="card certificate-upload-card accent-card">
+          <h2>Enviar certificado ao administrador</h2>
+          <div class="notice small">Envie arquivos PDF ou imagem. O certificado será analisado pelo administrador antes de contar nas suas horas.</div>
           <form id="certificateForm">
             <div class="field"><label for="certificateHours">Horas declaradas</label><input id="certificateHours" type="number" min="0" placeholder="Ex.: 20"></div>
-            <div class="field"><label for="certificateObservation">Observação</label><textarea id="certificateObservation" placeholder="Conte ao admin do que se trata este certificado."></textarea></div>
-            <div class="field"><label for="certificateFile">Arquivo do certificado</label><input id="certificateFile" type="file" accept="application/pdf,image/*" required></div>
+            <div class="field"><label for="certificateObservation">Observação</label><textarea id="certificateObservation" placeholder="Descreva o contexto do certificado para facilitar a validação."></textarea></div>
+            <label class="certificate-dropzone" for="certificateFile">
+              <span class="certificate-dropzone-icon" aria-hidden="true">+</span>
+              <strong>Clique para selecionar ou arraste seu certificado aqui</strong>
+              <small>PDF, PNG, JPG ou WEBP</small>
+              <input id="certificateFile" type="file" accept="application/pdf,image/*" required>
+            </label>
+            <div id="certificateFileName" class="certificate-file-name">Nenhum arquivo selecionado</div>
             <button type="submit">Enviar certificado</button>
           </form>
           <div id="certificateMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
+        <div class="card certificate-history-card accent-card accent-card--info">
           <h2>Meus certificados enviados</h2>
+          <div class="filters-bar certificate-filters">
+            <label class="activity-search-box" for="certificateSearchInput">
+              <span aria-hidden="true">/</span>
+              <input id="certificateSearchInput" type="search" placeholder="Buscar certificado...">
+            </label>
+            <select id="certificateAdminFilter">
+              <option value="todos">Todos</option>
+              <option value="pendente">Pendente</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="rejeitado">Rejeitado</option>
+            </select>
+          </div>
+          <p id="certificateFilterResult" class="small activity-filter-result"></p>
           <div id="certificatesList" class="list"></div>
         </div>
       </div>
     </section>
 
     <section id="oportunidades" class="panel-section hidden">
-      <div class="card">
+      <div class="opportunity-header">
+        <div>
+          <h2>Oportunidades</h2>
+          <p>Participe de eventos e ações que contam como horas complementares.</p>
+        </div>
+        <div id="opportunitySummaryGrid" class="opportunity-summary"></div>
+      </div>
+      <div class="card opportunity-panel accent-card">
         <h2>Oportunidades disponíveis</h2>
+        <div class="filters-bar opportunity-filters">
+          <label class="activity-search-box" for="opportunitySearchInput">
+            <span aria-hidden="true">/</span>
+            <input id="opportunitySearchInput" type="search" placeholder="Buscar oportunidade...">
+          </label>
+          <select id="opportunityStatusFilter">
+            <option value="todas">Todas</option>
+            <option value="inscritas">Inscritas</option>
+            <option value="disponiveis">Disponíveis</option>
+          </select>
+          <select id="opportunitySortFilter">
+            <option value="recentes">Mais recentes</option>
+            <option value="maior_horas">Maior carga horária</option>
+            <option value="menor_horas">Menor carga horária</option>
+          </select>
+        </div>
+        <p id="opportunityFilterResult" class="small activity-filter-result"></p>
         <div id="opportunitiesList" class="list"></div>
       </div>
     </section>
   </main>
 </div>
 
-<script src="js/data.js"></script>
-<script src="js/index.js"></script>
+<div id="submissionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="submissionModalTitle">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div>
+        <h2 id="submissionModalTitle">Enviar comprovante</h2>
+        <p id="submissionModalMeta" class="small"></p>
+      </div>
+      <button type="button" id="closeSubmissionModal" class="icon-button" aria-label="Fechar">×</button>
+    </div>
+    <form id="submissionModalForm">
+      <input type="hidden" name="activityId">
+      <div class="field"><label>Categoria</label><select name="categoria" required><option value="">Selecione...</option><option>Ensino</option><option>Pesquisa</option><option>Extensão</option><option>Eventos</option><option>Cursos livres</option><option>Monitoria</option><option>Projetos</option></select></div>
+      <div class="field"><label>Carga horária declarada</label><input name="horasDeclaradas" type="number" min="1" required></div>
+      <div class="field"><label>Descrição da atividade realizada</label><textarea name="descricao" required placeholder="Descreva a atividade complementar realizada."></textarea></div>
+      <div class="field"><label>Observação</label><textarea name="observacao" placeholder="Alguma observação sobre o arquivo?"></textarea></div>
+      <div class="field"><label>Arquivo do aluno</label><input name="arquivo" type="file" required></div>
+      <div class="actions-row modal-actions">
+        <button type="button" id="cancelSubmissionModal" class="secondary">Cancelar</button>
+        <button type="submit">Enviar comprovante</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/index.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/custom-select.js"></script>
 </body>
 </html>

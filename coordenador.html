@@ -1,27 +1,70 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGAC - Coordenador</title>
-  <link rel="stylesheet" href="sigac.css">
+  <link rel="icon" type="image/png" href="Logo SIGAC-otimizada.png">
+  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<header class="console-header">
+  <div class="console-brand">
+    <img src="Logo SIGAC.png" alt="Logo SIGAC">
+    <span class="brand-slash">/</span>
+    <strong>SIGAC</strong>
+  </div>
+  <div class="console-context" aria-label="Contexto da tela">
+    <span>Gestão acadêmica</span>
+    <strong>Coordenação</strong>
+  </div>
+  <div class="console-actions">
+    <span class="status-pill"><span></span>Coordenador</span>
+    <button type="button" class="header-button" data-section-jump="envios" aria-label="Abrir fila de envios">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 4h6V7H9v2Zm0 4h6v-2H9v2Zm0 4h4v-2H9v2Z"/></svg>
+      <span>Avaliações</span>
+    </button>
+    <button type="button" class="header-button light" data-section-jump="alunos" aria-label="Abrir alunos">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8.5 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2 21a6 6 0 0 1 12 0H2Zm12.5 0a7.5 7.5 0 0 0-2.1-5.2A5.5 5.5 0 0 1 22 19.5V21h-7.5Z"/></svg>
+      <span>Alunos</span>
+    </button>
+  </div>
+</header>
+
 <div class="layout">
   <aside class="sidebar">
-    <div class="brand"><h2>SIGAC</h2><p>Coordenador</p></div>
-    <div class="user-box">
-      <strong id="userName">Carregando...</strong>
-      <span id="userRole">Coordenador</span>
+    <svg class="sidebar-icons" aria-hidden="true">
+      <symbol id="icon-dashboard" viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></symbol>
+      <symbol id="icon-users" viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8.5 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2 21a6 6 0 0 1 12 0H2Zm12.5 0a7.5 7.5 0 0 0-2.1-5.2A5.5 5.5 0 0 1 22 19.5V21h-7.5Z"/></symbol>
+      <symbol id="icon-activities" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2Zm2 5h8V6H8v2Zm0 5h8v-2H8v2Zm0 4h5v-2H8v2Z"/></symbol>
+      <symbol id="icon-submissions" viewBox="0 0 24 24"><path d="M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 4h6V7H9v2Zm0 4h6v-2H9v2Zm0 4h4v-2H9v2Z"/></symbol>
+      <symbol id="icon-certificate" viewBox="0 0 24 24"><path d="M4 4h16v11H4V4Zm2 2v7h12V6H6Zm3 3h6V7H9v2Zm7 7 2 1.2 2-1.2V22l-2-1.2-2 1.2v-6Zm-10 0h8v2H6v-2Z"/></symbol>
+      <symbol id="icon-opportunities" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 5.7 3.2L12 10.7 6.3 7.5 12 4.3ZM5 9.2l6 3.4v6.7l-6-3.4V9.2Zm8 10.1v-6.7l6-3.4v6.7l-6 3.4Z"/></symbol>
+    </svg>
+
+    <div class="sidebar-section-label">Organização</div>
+    <div class="user-box" role="button" tabindex="0" aria-label="Perfil do coordenador">
+      <span id="userInitial" class="org-avatar" aria-hidden="true">C</span>
+      <span class="org-copy">
+        <strong id="userName">Carregando...</strong>
+        <span id="userRole">Coordenador</span>
+      </span>
+      <span class="org-chevron" aria-hidden="true"></span>
     </div>
+
     <nav class="menu">
-      <button data-section="dashboard" class="active">Dashboard</button>
-      <button data-section="atividades">Atividades</button>
-      <button data-section="envios">Envios</button>
-      <button data-section="certificados">Certificados</button>
-      <button data-section="oportunidades">Oportunidades</button>
+      <div class="menu-group-label">Visão geral</div>
+      <button data-section="dashboard" class="active"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span>Dashboard</span></button>
+      <div class="menu-group-label">Operação</div>
+      <button data-section="alunos"><svg class="nav-icon"><use href="#icon-users"></use></svg><span>Alunos</span></button>
+      <button data-section="atividades"><svg class="nav-icon"><use href="#icon-activities"></use></svg><span>Atividades</span></button>
+      <button data-section="regras"><svg class="nav-icon"><use href="#icon-activities"></use></svg><span>Regras</span></button>
+      <button data-section="envios"><svg class="nav-icon"><use href="#icon-submissions"></use></svg><span>Envios de atividades</span></button>
+      <button data-section="certificados"><svg class="nav-icon"><use href="#icon-certificate"></use></svg><span>Certificados</span></button>
+      <button data-section="oportunidades"><svg class="nav-icon"><use href="#icon-opportunities"></use></svg><span>Oportunidades</span></button>
     </nav>
+
     <button id="logoutBtn" class="logout">Sair</button>
   </aside>
 
@@ -31,56 +74,265 @@
         <h1>Painel do Coordenador</h1>
         <p id="coordinatorCoursesInfo">Gerencie atividades, alunos e avaliações do seu curso.</p>
       </div>
+      <div class="topbar-actions">
+        <button type="button" class="secondary" data-section-jump="alunos">Cadastrar aluno</button>
+        <button type="button" class="secondary" data-section-jump="envios">Avaliar envios</button>
+      </div>
     </div>
 
     <section id="dashboard" class="panel-section">
       <div id="metricsGrid" class="grid metrics"></div>
       <div class="dual-grid" style="margin-top:18px;">
-        <div class="card"><h2>Status geral</h2><canvas id="chartStatus"></canvas></div>
-        <div class="card"><h2>Engajamento dos alunos</h2><canvas id="chartEngajamento"></canvas></div>
+        <div class="card chart-card accent-card accent-card--warning">
+          <div class="chart-head"><div><h2>Status geral</h2><p>Distribuição dos envios avaliados e pendentes do seu curso.</p></div></div>
+          <div class="chart-box chart-box--donut">
+            <canvas id="chartStatus"></canvas>
+          </div>
+        </div>
+        <div class="card chart-card accent-card accent-card--info">
+          <div class="chart-head"><div><h2>Engajamento dos alunos</h2><p>Comparativo entre alunos com e sem envio registrado.</p></div></div>
+          <div class="chart-box chart-box--md">
+            <canvas id="chartEngajamento"></canvas>
+          </div>
+        </div>
       </div>
-      <div class="card" style="margin-top:18px;">
+      <div class="card accent-card accent-card--info" style="margin-top:18px;">
         <h2>Alunos dos seus cursos</h2>
         <div id="studentsByCourse" class="list"></div>
       </div>
     </section>
 
+    <section id="alunos" class="panel-section hidden">
+      <div class="coordinator-students-shell">
+        <div class="dual-grid coordinator-student-top">
+          <div class="card accent-card">
+            <h2>Novo aluno</h2>
+            <form id="studentForm">
+              <div class="field"><label for="studentNameInput">Nome completo</label><input id="studentNameInput" type="text" required></div>
+              <div class="field"><label for="studentEmailInput">E-mail</label><input id="studentEmailInput" type="email" required></div>
+              <div class="field"><label for="studentPasswordInput">Senha inicial</label><input id="studentPasswordInput" type="text" required minlength="6"></div>
+              <div class="field"><label for="studentCourseInput">Curso</label><select id="studentCourseInput" required></select></div>
+              <button type="submit">Cadastrar aluno</button>
+            </form>
+            <div id="studentFormMessage" class="message info hidden"></div>
+          </div>
+
+          <div class="card coordinator-flow-card accent-card accent-card--info">
+            <h2>Fluxo da coordenação</h2>
+            <div class="access-flow compact">
+              <div class="flow-step"><span>1</span><div><strong>Cadastrar aluno</strong><p>Crie o acesso inicial do aluno no curso selecionado.</p></div></div>
+              <div class="flow-step"><span>2</span><div><strong>Publicar atividades</strong><p>Organize atividades, prazos e materiais para a turma.</p></div></div>
+              <div class="flow-step"><span>3</span><div><strong>Validar envios</strong><p>Acompanhe comprovantes, aprove ou solicite correções.</p></div></div>
+            </div>
+            <div id="coordinatorStudentsHighlights" class="summary-chips coordinator-flow-highlights"></div>
+          </div>
+        </div>
+
+        <div class="card accent-card accent-card--info">
+          <div class="section-title">
+            <div>
+              <h2>Alunos vinculados</h2>
+              <p class="small">Acompanhe rapidamente progresso, pendências e último envio por aluno.</p>
+            </div>
+          </div>
+          <div class="filters-bar coordinator-student-filters">
+            <label class="activity-search-box" for="coordinatorStudentSearchInput">
+              <span aria-hidden="true">/</span>
+              <input id="coordinatorStudentSearchInput" type="search" placeholder="Buscar aluno por nome ou e-mail...">
+            </label>
+            <select id="coordinatorStudentCourseFilter">
+              <option value="todos">Todos os cursos</option>
+            </select>
+          </div>
+          <p id="coordinatorStudentFilterResult" class="small activity-filter-result"></p>
+          <div id="coordinatorStudentsList" class="coordinator-student-grid"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="atividades" class="panel-section hidden">
       <div class="dual-grid">
-        <div class="card">
-          <h2>Nova atividade</h2>
-          <form id="activityForm">
-            <div class="field"><label for="titulo">Título</label><input id="titulo" type="text" required></div>
-            <div class="field"><label for="descricao">Descrição</label><textarea id="descricao" required></textarea></div>
-            <div class="field"><label for="courseId">Curso destino</label><select id="courseId" required></select></div>
-            <div class="dual-grid">
-              <div class="field"><label for="horas">Horas</label><input id="horas" type="number" min="1" required></div>
-              <div class="field"><label for="prazo">Prazo</label><input id="prazo" type="date"></div>
+        <div class="card coordinator-activity-form-card accent-card">
+          <div class="coordinator-panel-heading">
+            <div>
+              <span class="eyebrow">Publicação acadêmica</span>
+              <h2>Nova atividade</h2>
+              <p>Cadastre atividades dos seus cursos com carga horária, prazo e material de apoio de forma mais clara para os alunos.</p>
             </div>
-            <div class="field"><label for="material">Material de apoio</label><input id="material" type="file"></div>
-            <button type="submit">Publicar atividade</button>
+          </div>
+          <form id="activityForm" class="coordinator-activity-form">
+            <div class="coordinator-activity-form-shell">
+              <div class="field">
+                <label for="titulo">Título</label>
+                <input id="titulo" type="text" required>
+                <small class="field-note">Use um nome direto e fácil de localizar na lista de atividades.</small>
+              </div>
+              <div class="field">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" required></textarea>
+                <small class="field-note">Resuma objetivo, formato e o que o aluno precisa entregar.</small>
+              </div>
+            </div>
+            <div class="coordinator-activity-form-grid">
+              <div class="field">
+                <label for="courseId">Curso de destino</label>
+                <select id="courseId" required></select>
+                <small class="field-note">Selecione o curso que vai receber esta publicação.</small>
+              </div>
+              <div class="field">
+                <label for="horas">Horas</label>
+                <input id="horas" type="number" min="1" required>
+                <small class="field-note">Defina a carga horária prevista para a atividade.</small>
+              </div>
+              <div class="field">
+                <label for="prazo">Prazo</label>
+                <input id="prazo" type="date">
+                <small class="field-note">Se não houver data final, deixe o campo em branco.</small>
+              </div>
+            </div>
+            <div class="field">
+              <label for="material">Material de apoio</label>
+              <input id="material" type="file">
+              <small class="field-note">Anexe edital, roteiro, modelo ou outro arquivo de orientação quando necessário.</small>
+            </div>
+            <div class="coordinator-activity-form-actions">
+              <button type="submit">Publicar atividade</button>
+            </div>
           </form>
           <div id="activityMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
-          <h2>Atividades lançadas</h2>
-          <div id="activitiesList" class="list"></div>
+        <div class="card coordinator-activity-list-card accent-card accent-card--info">
+          <div class="coordinator-panel-heading coordinator-panel-heading-split">
+            <div>
+              <span class="eyebrow">Painel de atividades</span>
+              <h2>Atividades lançadas</h2>
+              <p>Monitore as publicações ativas, acompanhe materiais anexados e veja rapidamente onde já existem envios.</p>
+            </div>
+          </div>
+          <div class="filters-bar activity-filters coordinator-activities-filters">
+            <label class="activity-search-box" for="coordinatorActivitySearchInput">
+              <span aria-hidden="true">/</span>
+              <input id="coordinatorActivitySearchInput" type="search" placeholder="Buscar por título, descrição ou material...">
+            </label>
+            <div class="activity-filter-side">
+              <select id="coordinatorActivityCourseFilter">
+                <option value="todos">Todos os cursos</option>
+              </select>
+              <select id="coordinatorActivityStatusFilter">
+                <option value="todos">Todos os status</option>
+                <option value="aberta">Abertas</option>
+                <option value="vence_em_breve">Vencem em breve</option>
+                <option value="encerrada">Encerradas</option>
+              </select>
+            </div>
+          </div>
+          <div id="coordinatorActivitiesHighlights" class="summary-chips"></div>
+          <p id="coordinatorActivityFilterResult" class="small activity-filter-result"></p>
+          <div id="activitiesList" class="coordinator-activities-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="regras" class="panel-section hidden">
+      <div class="dual-grid">
+        <div class="card accent-card">
+          <h2>Nova regra do curso</h2>
+          <div class="notice small">Defina como cada categoria será validada no curso. O comportamento da regra continua o mesmo, mas o cadastro fica mais guiado.</div>
+          <form id="ruleForm">
+            <div class="coordinator-rule-step">
+              <span class="coordinator-rule-step-index">1</span>
+              <div class="field">
+                <label for="ruleCourseInput">Curso</label>
+                <select id="ruleCourseInput" required></select>
+                <small class="field-note">Escolha qual curso vai receber essa configuração.</small>
+              </div>
+            </div>
+            <div class="field"><label for="ruleCategoryInput">Categoria</label><input id="ruleCategoryInput" type="text" placeholder="Ex.: Eventos, Monitoria, Extensão" required><small class="field-note">Use um nome curto e claro para o tipo de atividade complementar.</small></div>
+            <div class="dual-grid coordinator-rule-guided-grid">
+              <div class="field"><label for="ruleMaxHours">Limite máximo</label><input id="ruleMaxHours" type="number" min="1" required></div>
+              <div class="field"><label for="ruleMinHours">Carga mínima</label><input id="ruleMinHours" type="number" min="0" value="0"></div>
+            </div>
+            <div class="coordinator-rule-hints-grid">
+              <div class="coordinator-rule-hint-card">
+                <strong>Carga mínima</strong>
+                <p>Informe o mínimo de horas exigido para que a atividade se encaixe nessa categoria.</p>
+              </div>
+              <div class="coordinator-rule-hint-card">
+                <strong>Limite máximo</strong>
+                <p>Defina o teto de horas aceitas para evitar excesso em um único envio.</p>
+              </div>
+            </div>
+            <div class="coordinator-rule-toggle-group">
+              <label class="toggle-row coordinator-rule-toggle"><input id="ruleRequiresCertificate" type="checkbox" checked><span><strong>Exige certificado</strong><small>Ative quando o aluno precisar anexar um comprovante formal para essa categoria.</small></span></label>
+              <label class="toggle-row coordinator-rule-toggle"><input id="ruleRequiresApproval" type="checkbox" checked><span><strong>Exige aprovação do coordenador</strong><small>Mantenha ativo quando o envio precisar passar pela sua análise antes da validação.</small></span></label>
+            </div>
+            <button type="submit">Salvar regra</button>
+          </form>
+          <div id="ruleMessage" class="message info hidden"></div>
+        </div>
+        <div class="card accent-card accent-card--info">
+          <h2>Regras cadastradas</h2>
+          <div id="rulesList" class="coordinator-rules-grid"></div>
         </div>
       </div>
     </section>
 
     <section id="envios" class="panel-section hidden">
-      <div class="card">
-        <h2>Envios para avaliação</h2>
+      <div class="card accent-card accent-card--warning">
+        <h2>Envios para avaliações</h2>
+        <div class="filters-bar coordinator-submission-filters">
+          <label class="activity-search-box" for="submissionStudentSearchInput">
+            <span aria-hidden="true">/</span>
+            <input id="submissionStudentSearchInput" type="search" placeholder="Buscar por aluno ou e-mail...">
+          </label>
+          <select id="submissionCourseFilter">
+            <option value="todos">Todos os cursos</option>
+          </select>
+          <select id="submissionActivityFilter">
+            <option value="todos">Todas as atividades</option>
+          </select>
+          <select id="submissionStatusFilter">
+            <option value="todos">Todos os status</option>
+            <option value="em_analise">Em análise</option>
+            <option value="aprovado">Aprovado</option>
+            <option value="rejeitado">Rejeitado</option>
+          </select>
+        </div>
+        <p id="submissionFilterResult" class="small activity-filter-result"></p>
         <div id="pendingSubmissionsList" class="list"></div>
       </div>
     </section>
 
-
     <section id="certificados" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Enviar certificado ao admin</h2>
+      <div class="card accent-card accent-card--warning">
+        <div class="section-title">
+          <div>
+            <h2>Fila de certificados</h2>
+            <div class="notice small">Revise os certificados enviados pelos alunos dos seus cursos com prioridade para pendências e casos que exigem validação manual.</div>
+          </div>
+        </div>
+        <div id="coordinatorCertificateStats" class="grid metrics"></div>
+        <div class="coordinator-certificates-shell">
+          <div class="coordinator-certificates-toolbar">
+            <div class="activity-search-box">
+              <span aria-hidden="true">/</span>
+              <input id="coordinatorCertificateStudentSearch" type="search" placeholder="Filtrar por aluno ou arquivo...">
+            </div>
+            <select id="coordinatorCertificateStatusFilter">
+              <option value="todos">Todos os status</option>
+              <option value="pendente">Pendentes</option>
+              <option value="aprovado">Aprovados</option>
+              <option value="rejeitado">Rejeitados</option>
+            </select>
+            <select id="coordinatorCertificateCourseFilter">
+              <option value="todos">Todos os cursos</option>
+            </select>
+          </div>
+          <div id="coordinatorCertificateHighlights" class="summary-chips"></div>
+          <p id="coordinatorCertificateFilterResult" class="small activity-filter-result"></p>
+          <div id="studentCertificatesList" class="coordinator-certificate-grid"></div>
+        </div>
+        <div class="hidden">
           <form id="certificateForm">
             <div class="field"><label for="certificateHours">Horas declaradas</label><input id="certificateHours" type="number" min="0" placeholder="Ex.: 8"></div>
             <div class="field"><label for="certificateObservation">Observação</label><textarea id="certificateObservation" placeholder="Ex.: Certificado de participação em curso externo."></textarea></div>
@@ -89,23 +341,52 @@
           </form>
           <div id="certificateMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
+        <div class="hidden">
           <h2>Meus certificados enviados</h2>
           <div id="certificatesList" class="list"></div>
         </div>
       </div>
+      <div class="hidden">
+        <h2>Certificados dos alunos</h2>
+        <div id="studentCertificatesArchive" class="list"></div>
+      </div>
     </section>
 
     <section id="oportunidades" class="panel-section hidden">
-      <div class="card">
-        <h2>Oportunidades abertas</h2>
-        <div id="opportunitiesList" class="list"></div>
+      <div class="card accent-card">
+        <div class="coordinator-panel-heading coordinator-panel-heading-split">
+          <div>
+            <span class="eyebrow">Visualização de oportunidades</span>
+            <h2>Oportunidades abertas</h2>
+            <p>Acompanhe as oportunidades publicadas no sistema, veja o interesse dos participantes e consulte rapidamente a carga horária disponível.</p>
+          </div>
+        </div>
+        <div class="notice small">Esta área funciona como visualização para o coordenador. A criação de oportunidades continua seguindo as permissões já existentes no sistema.</div>
+        <div class="filters-bar opportunity-filters coordinator-opportunity-filters">
+          <label class="activity-search-box" for="coordinatorOpportunitySearchInput">
+            <span aria-hidden="true">/</span>
+            <input id="coordinatorOpportunitySearchInput" type="search" placeholder="Buscar por título ou descrição...">
+          </label>
+          <select id="coordinatorOpportunityStatusFilter">
+            <option value="todos">Todos os status</option>
+            <option value="disponivel">Disponíveis</option>
+            <option value="inscrito">Minhas inscrições</option>
+            <option value="com_inscritos">Com inscritos</option>
+          </select>
+        </div>
+        <div id="coordinatorOpportunityHighlights" class="summary-chips"></div>
+        <p id="coordinatorOpportunityFilterResult" class="small activity-filter-result"></p>
+        <div id="opportunitiesList" class="opportunity-grid coordinator-opportunity-grid"></div>
       </div>
     </section>
   </main>
 </div>
 
-<script src="js/data.js"></script>
-<script src="js/coordenador.js"></script>
+<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/ocr.js"></script>
+<script src="js/coordenador.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/custom-select.js"></script>
 </body>
 </html>
+
+

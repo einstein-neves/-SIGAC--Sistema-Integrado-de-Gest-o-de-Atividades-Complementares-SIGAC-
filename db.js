@@ -14,15 +14,18 @@ function getSslConfig() {
     || /(?:^|[?&])ssl=(true|1)/i.exec(DATABASE_URL)?.[1]?.toLowerCase();
   const value = explicitValue || urlValue || '';
   if (['false', '0', 'disable', 'off'].includes(value)) return false;
-  if (['true', '1', 'require', 'on', 'verify-full', 'verify-ca', 'prefer'].includes(value)) {
-    return { rejectUnauthorized: false };
+  if (['verify-full', 'verify-ca', 'true', '1', 'require', 'on', 'prefer'].includes(value)) {
+    return { rejectUnauthorized: true };
   }
   return undefined;
 }
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: getSslConfig()
+  ssl: getSslConfig(),
+  max: Number(process.env.PG_POOL_MAX || 5),
+  idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 30000),
+  connectionTimeoutMillis: Number(process.env.PG_CONNECTION_TIMEOUT_MS || 10000)
 });
 
 function toPgPlaceholders(text) {
@@ -131,6 +134,24 @@ async function initDatabase() {
       PRIMARY KEY (user_id, course_id)
     );
 
+    CREATE TABLE IF NOT EXISTS student_courses (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, course_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS activity_rules (
+      id TEXT PRIMARY KEY,
+      course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+      categoria TEXT NOT NULL,
+      limite_maximo INTEGER NOT NULL DEFAULT 0,
+      carga_minima INTEGER NOT NULL DEFAULT 0,
+      exige_certificado INTEGER NOT NULL DEFAULT 1,
+      exige_aprovacao INTEGER NOT NULL DEFAULT 1,
+      created_by TEXT REFERENCES users(id),
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS opportunities (
       id TEXT PRIMARY KEY,
       titulo TEXT NOT NULL,
@@ -198,6 +219,16 @@ async function initDatabase() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id TEXT PRIMARY KEY,
+      actor_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT,
+      details TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS certificates (
       id TEXT PRIMARY KEY,
       sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -231,8 +262,77 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      expires_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      token_hash TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT
+    );
+
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at TEXT;
+
+    ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS categoria TEXT NOT NULL DEFAULT '';
+    ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS horas_declaradas INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS descricao TEXT NOT NULL DEFAULT '';
+
+    CREATE INDEX IF NOT EXISTS idx_users_tipo_ativo ON users(tipo, ativo);
+    CREATE INDEX IF NOT EXISTS idx_users_course_id ON users(course_id);
+
+    CREATE INDEX IF NOT EXISTS idx_coordinator_courses_user_id ON coordinator_courses(user_id);
+    CREATE INDEX IF NOT EXISTS idx_coordinator_courses_course_id ON coordinator_courses(course_id);
+
+    CREATE INDEX IF NOT EXISTS idx_student_courses_user_id ON student_courses(user_id);
+    CREATE INDEX IF NOT EXISTS idx_student_courses_course_id ON student_courses(course_id);
+
+    CREATE INDEX IF NOT EXISTS idx_activity_rules_course_id ON activity_rules(course_id);
+
+    CREATE INDEX IF NOT EXISTS idx_opportunity_registrations_opportunity_id ON opportunity_registrations(opportunity_id);
+    CREATE INDEX IF NOT EXISTS idx_opportunity_registrations_user_id ON opportunity_registrations(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_activities_course_id ON activities(course_id);
+    CREATE INDEX IF NOT EXISTS idx_activities_created_by ON activities(created_by);
+    CREATE INDEX IF NOT EXISTS idx_activities_created_at ON activities(created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions(student_id);
+    CREATE INDEX IF NOT EXISTS idx_submissions_activity_id ON submissions(activity_id);
+
+    CREATE INDEX IF NOT EXISTS idx_submission_versions_submission_id ON submission_versions(submission_id);
+    CREATE INDEX IF NOT EXISTS idx_submission_versions_status ON submission_versions(status);
+    CREATE INDEX IF NOT EXISTS idx_submission_versions_enviada_em ON submission_versions(enviada_em);
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+    CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_certificates_sender_id ON certificates(sender_id);
+    CREATE INDEX IF NOT EXISTS idx_certificates_admin_status ON certificates(admin_status);
+    CREATE INDEX IF NOT EXISTS idx_certificates_created_at ON certificates(created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_emails_created_at ON emails(created_at);
+    CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+
+    INSERT INTO student_courses (user_id, course_id)
+    SELECT id, course_id
+    FROM users
+    WHERE tipo = 'aluno' AND course_id IS NOT NULL
+    ON CONFLICT DO NOTHING;
+
+    UPDATE emails SET status = 'simulado (fila local)' WHERE status = 'simulado';
+
+    INSERT INTO activity_rules
+      (id, course_id, categoria, limite_maximo, carga_minima, exige_certificado, exige_aprovacao, created_by, created_at)
+    SELECT 'rule_' || id || '_eventos', id, 'Eventos', 30, 4, 1, 1, NULL, NOW()::TEXT
+    FROM courses
+    ON CONFLICT DO NOTHING;
+
+    INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, details, created_at)
+    VALUES ('audit_migration_requirements_2_7', NULL, 'migrou_requisitos_2_7', 'sistema', 'requirements-2-7',
+            'Migração criou vínculos múltiplos de alunos, regras persistidas e logs de auditoria.', NOW()::TEXT)
+    ON CONFLICT DO NOTHING;
   `);
 }
 

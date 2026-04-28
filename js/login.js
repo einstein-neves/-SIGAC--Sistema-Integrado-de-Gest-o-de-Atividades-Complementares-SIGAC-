@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginMessage = document.getElementById('loginMessage');
   const registerMessage = document.getElementById('registerMessage');
   const courseSelect = document.getElementById('registerCourse');
+  const loginRoleSelect = document.getElementById('loginRole');
   const tabs = [...document.querySelectorAll('.auth-tab')];
   const panels = [...document.querySelectorAll('.auth-panel')];
   const routes = {
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     hide(loginMessage);
-    hide(registerMessage);
+    if (registerMessage) hide(registerMessage);
   }
 
   async function requestJson(url, options = {}) {
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ...options
       });
     } catch (_) {
-      throw new Error('Nao foi possivel conectar ao servidor. Abra pelo SIGAC em localhost:3000 ou deixe o servidor ligado.');
+      throw new Error('Não foi possível conectar ao servidor. Abra o SIGAC em localhost:3000 ou mantenha o servidor ligado.');
     }
 
     let payload = {};
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!response.ok) {
-      throw new Error(payload.error || 'Nao foi possivel concluir a solicitacao. Verifique se o backend do SIGAC esta em execucao.');
+      throw new Error(payload.error || 'Não foi possível concluir a solicitação. Verifique se o backend do SIGAC está em execução.');
     }
 
     return payload;
@@ -87,8 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateCourses(courses) {
+    if (!courseSelect) return;
     if (!courses.length) {
-      courseSelect.innerHTML = '<option value="">Nenhum curso disponivel</option>';
+      courseSelect.innerHTML = '<option value="">Nenhum curso disponível</option>';
       courseSelect.disabled = true;
       return;
     }
@@ -101,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadCourses() {
+    if (!courseSelect) return;
     try {
       const data = await requestJson('/api/public/courses');
       populateCourses(data.courses || []);
@@ -120,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const email = document.getElementById('email').value.trim();
     const senha = document.getElementById('senha').value;
+    const selectedRole = loginRoleSelect?.value || '';
 
     try {
       const data = await requestJson('/api/auth/login', {
@@ -127,7 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ email, senha })
       });
       saveToken(data.token);
-      show(loginMessage, `Sucesso! Bem-vindo, ${data.user.nome}.`, 'success');
+      if (selectedRole && data.user.tipo !== selectedRole) {
+        if (loginRoleSelect) loginRoleSelect.value = data.user.tipo;
+        show(loginMessage, `Login realizado com sucesso. O acesso correto para este usuário é ${data.user.tipo}. Redirecionando...`, 'info');
+      } else {
+        show(loginMessage, `Sucesso! Bem-vindo, ${data.user.nome}.`, 'success');
+      }
       setTimeout(() => {
         window.location.href = routes[data.user.tipo] || 'index.html';
       }, 600);
@@ -136,36 +145,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  registerForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    hide(registerMessage);
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      hide(registerMessage);
 
-    const nome = document.getElementById('registerName').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const courseId = courseSelect.value;
-    const senha = document.getElementById('registerPassword').value;
-    const confirmar = document.getElementById('registerPasswordConfirm').value;
+      const nome = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const courseId = courseSelect.value;
+      const senha = document.getElementById('registerPassword').value;
+      const confirmar = document.getElementById('registerPasswordConfirm').value;
 
-    if (senha !== confirmar) {
-      show(registerMessage, 'As senhas nao coincidem.', 'error');
-      return;
-    }
+      if (senha !== confirmar) {
+        show(registerMessage, 'As senhas não coincidem.', 'error');
+        return;
+      }
 
-    try {
-      await requestJson('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ nome, email, senha, courseId })
-      });
-      registerForm.reset();
-      await loadCourses();
-      document.getElementById('email').value = email;
-      document.getElementById('senha').value = senha;
-      setActivePanel('loginPanel');
-      show(loginMessage, 'Cadastro realizado com sucesso. Agora faca seu login.', 'success');
-    } catch (error) {
-      show(registerMessage, error.message, 'error');
-    }
-  });
+      try {
+        await requestJson('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ nome, email, senha, courseId })
+        });
+        registerForm.reset();
+        await loadCourses();
+        document.getElementById('email').value = email;
+        document.getElementById('senha').value = senha;
+        setActivePanel('loginPanel');
+        show(loginMessage, 'Cadastro realizado com sucesso. Agora faça seu login.', 'success');
+      } catch (error) {
+        show(registerMessage, error.message, 'error');
+      }
+    });
+  }
 
   setActivePanel('loginPanel');
   loadCourses();

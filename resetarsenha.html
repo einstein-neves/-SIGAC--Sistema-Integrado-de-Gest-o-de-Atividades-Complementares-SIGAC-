@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGAC - Redefinir senha</title>
-  <link rel="stylesheet" href="sigac.css">
+  <link rel="icon" type="image/png" href="Logo SIGAC-otimizada.png">
+  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-25-2">
 </head>
 <body>
   <div class="container-login">
     <div class="login-card">
-      <h1>Redefinir senha</h1>
-      <p>Fluxo de redefinição com registro de e-mail simulado no protótipo.</p>
+      <div class="login-brand">
+        <img src="Logo SIGAC-otimizada.png" alt="Logo SIGAC">
+        <div>
+          <h1>Redefinir senha</h1>
+          <p>Atualize sua senha com segurança e registre a ação no ambiente do SIGAC.</p>
+        </div>
+      </div>
 
       <form id="resetForm">
         <div class="field">
@@ -18,14 +24,23 @@
           <input id="email" type="email" required>
         </div>
 
+        <div class="actions-row" style="margin-bottom:12px;">
+          <button id="requestResetToken" type="button" class="secondary">Enviar token</button>
+        </div>
+
+        <div class="field">
+          <label for="resetToken">Token recebido</label>
+          <input id="resetToken" type="text" autocomplete="one-time-code" required>
+        </div>
+
         <div class="field">
           <label for="senha">Nova senha</label>
-          <input id="senha" type="password" required>
+          <input id="senha" type="password" minlength="8" required>
         </div>
 
         <div class="field">
           <label for="confirmarSenha">Confirmar nova senha</label>
-          <input id="confirmarSenha" type="password" required>
+          <input id="confirmarSenha" type="password" minlength="8" required>
         </div>
 
         <div class="actions-row">
@@ -39,6 +54,7 @@
   </div>
 
   <script src="js/data.js"></script>
-  <script src="js/reset.js"></script>
+  <script src="js/reset.js?v=ui-refino-2026-04-25-2"></script>
+  <script src="js/custom-select.js"></script>
 </body>
 </html>

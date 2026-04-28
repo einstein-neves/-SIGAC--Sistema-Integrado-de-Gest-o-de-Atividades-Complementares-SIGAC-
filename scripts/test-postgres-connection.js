@@ -10,7 +10,7 @@ async function main() {
 
   const client = new Client({
     connectionString: databaseUrl,
-    ssl: /sslmode=require|ssl=true/i.test(databaseUrl) ? { rejectUnauthorized: false } : undefined
+    ssl: /sslmode=(require|verify-full|verify-ca|prefer)|ssl=true/i.test(databaseUrl) ? { rejectUnauthorized: true } : undefined
   });
 
   await client.connect();

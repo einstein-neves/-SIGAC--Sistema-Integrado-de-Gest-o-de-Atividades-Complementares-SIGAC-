@@ -33,7 +33,7 @@
 
   function dataUrlToBlob(dataUrl) {
     const [meta, base64] = String(dataUrl || '').split(',');
-    if (!base64) throw new Error('Arquivo invalido para OCR.');
+    if (!base64) throw new Error('Arquivo inválido para OCR.');
     const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'application/octet-stream';
     const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
     return new Blob([bytes], { type: mime });
@@ -105,19 +105,85 @@
     return `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}`;
   }
 
+  function normalizeFieldKey(field) {
+    return normalizeForMatching(field).toLowerCase();
+  }
+
+  function formatOcrFieldLabel(field) {
+    const labels = {
+      titulo: 'título do certificado',
+      'titulo do certificado': 'título do certificado',
+      'título do certificado': 'título do certificado',
+      'nome do participante': 'nome do participante',
+      'carga horaria': 'carga horária',
+      'carga horária': 'carga horária',
+      data: 'data',
+      instituicao: 'instituição',
+      instituição: 'instituição',
+      'curso/evento': 'curso/evento'
+    };
+
+    return labels[normalizeFieldKey(field)] || String(field || '').trim();
+  }
+
+  function dedupeOcrFields(fields) {
+    const seen = new Set();
+    return (Array.isArray(fields) ? fields : [])
+      .map((field) => formatOcrFieldLabel(field))
+      .filter(Boolean)
+      .filter((field) => {
+        const key = normalizeFieldKey(field);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
   function buildHumanSummary(foundFields, missingFields, detectedCourseName, detectedHours) {
-    const highlights = [];
-    if (detectedCourseName) highlights.push(`identificou o curso/evento \"${detectedCourseName}\"`);
-    if (detectedHours > 0) highlights.push(`encontrou ${detectedHours}h de carga horaria`);
+    const uniqueFoundFields = dedupeOcrFields(foundFields);
+    const uniqueMissingFields = dedupeOcrFields(missingFields)
+      .filter((field) => !uniqueFoundFields.some((foundField) => normalizeFieldKey(foundField) === normalizeFieldKey(field)));
 
-    let summary = foundFields.length
-      ? `O OCR encontrou ${joinHumanList(foundFields)}.`
-      : 'O OCR nao conseguiu confirmar nenhum campo importante.';
+    if (uniqueFoundFields.length <= 1 && uniqueMissingFields.length >= 4) {
+      return 'Não foi possível validar automaticamente este certificado. O texto extraído não contém informações suficientes para confirmar os principais dados do documento. Recomenda-se revisão manual.';
+    }
 
-    if (highlights.length) summary += ` Tambem ${joinHumanList(highlights)}.`;
-    if (missingFields.length) summary += ` Ainda faltou ${joinHumanList(missingFields)}.`;
+    const parts = [];
+    if (uniqueFoundFields.length) {
+      const intro = uniqueMissingFields.length
+        ? 'Pré-análise concluída com pendências.'
+        : 'Pré-análise concluída.';
+      parts.push(`${intro} O OCR identificou ${joinHumanList(uniqueFoundFields)}.`);
+    } else {
+      parts.push('Não foi possível validar automaticamente este certificado. O texto extraído não contém informações suficientes para confirmar os principais dados do documento.');
+    }
 
-    return summary;
+    if (uniqueMissingFields.length) {
+      parts.push(`Não foi possível identificar: ${joinHumanList(uniqueMissingFields)}.`);
+      parts.push('Recomenda-se revisão manual antes da decisão final.');
+    }
+
+    if (detectedHours > 0) parts.push(`Carga horária detectada: ${detectedHours}h.`);
+    if (detectedCourseName) parts.push(`Curso/evento detectado: ${detectedCourseName}.`);
+
+    return parts.join(' ');
+  }
+
+  function buildOcrReason(ocrStatus, missingFields) {
+    const uniqueMissingFields = dedupeOcrFields(missingFields);
+
+    let reason = 'A pré-análise identificou informações parciais. A decisão final deve ser confirmada manualmente.';
+    if (ocrStatus === 'aprovado_automatico') {
+      reason = 'Os principais dados do certificado foram identificados com boa consistência.';
+    } else if (ocrStatus === 'rejeitado_automatico') {
+      reason = 'O texto extraído não contém informações suficientes para validar automaticamente o certificado.';
+    }
+
+    if (uniqueMissingFields.length) {
+      reason += ` Campos não identificados: ${joinHumanList(uniqueMissingFields)}.`;
+    }
+
+    return reason;
   }
 
   function detectTextPatterns(text, expectedName = '') {
@@ -127,7 +193,7 @@
     const expectedAscii = normalizeForMatching(expectedName).toLowerCase();
 
     const hourMatch = findFirstMatch(asciiText, [
-      /\b(?:carga\s*horaria|carga|duracao|duracao total|dura(?:c|�)ao)\s*[:\-]?\s*(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
+      /\b(?:carga\s*horaria|carga|duracao|duracao total|dura(?:c|\u00e7)[a\u00e3]o)\s*[:\-]?\s*(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
       /\b(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
       /\b(\d{1,3})\s*horas?\s*complementares\b/i
     ]);
@@ -142,10 +208,10 @@
     ]);
 
     const titleLabelMap = {
-      participacao: 'Certificado de Participacao',
-      conclusao: 'Certificado de Conclusao',
-      aprovacao: 'Certificado de Aprovacao',
-      presenca: 'Certificado de Presenca'
+      participacao: 'Certificado de Participação',
+      conclusao: 'Certificado de Conclusão',
+      aprovacao: 'Certificado de Aprovação',
+      presenca: 'Certificado de Presença'
     };
 
     const detectedTitle = titleMatch
@@ -159,10 +225,10 @@
     let score = 0;
 
     if (detectedTitle) {
-      foundFields.push('titulo do certificado');
+      foundFields.push('título do certificado');
       score += 2;
     } else {
-      missingFields.push('titulo do certificado');
+      missingFields.push('título do certificado');
     }
 
     if (detectedName) {
@@ -213,18 +279,11 @@
       ocrStatus = 'rejeitado_automatico';
     }
 
-    let ocrReason = 'O OCR encontrou indicios parciais e o admin deve confirmar manualmente.';
-    if (ocrStatus === 'aprovado_automatico') {
-      ocrReason = 'Foram encontrados titulo, curso/evento e carga horaria com sinais fortes de certificado.';
-    } else if (ocrStatus === 'rejeitado_automatico') {
-      ocrReason = 'O texto extraido foi insuficiente para caracterizar um certificado valido.';
-    }
-
-    if (missingFields.length) {
-      ocrReason += ` Faltou identificar: ${missingFields.join(', ')}.`;
-    }
-
-    const humanSummary = buildHumanSummary(foundFields, missingFields, detectedCourseName, detectedHours);
+    const normalizedFoundFields = dedupeOcrFields(foundFields);
+    const normalizedMissingFields = dedupeOcrFields(missingFields)
+      .filter((field) => !normalizedFoundFields.some((foundField) => normalizeFieldKey(foundField) === normalizeFieldKey(field)));
+    const humanSummary = buildHumanSummary(normalizedFoundFields, normalizedMissingFields, detectedCourseName, detectedHours);
+    const ocrReason = buildOcrReason(ocrStatus, normalizedMissingFields);
 
     return {
       extractedText: normalized,
@@ -234,8 +293,8 @@
       detectedDate: dateMatch ? dateMatch[0] : '',
       detectedTitle,
       detectedCourseName,
-      foundFields,
-      missingFields,
+      foundFields: normalizedFoundFields,
+      missingFields: normalizedMissingFields,
       confidenceScore: score,
       humanSummary,
       ocrStatus,

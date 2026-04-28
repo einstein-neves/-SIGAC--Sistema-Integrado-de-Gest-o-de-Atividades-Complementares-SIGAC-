@@ -4,79 +4,113 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGAC - Login</title>
-  <link rel="stylesheet" href="sigac.css">
+  <link rel="icon" type="image/png" href="Logo SIGAC-otimizada.png">
+  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-login">
 </head>
 <body>
   <div class="container-login">
     <div class="login-card">
-      <h1>SIGAC</h1>
-      <p>Sistema Integrado de Gestao de Atividades Complementares</p>
-
-      <div class="auth-tabs" role="tablist" aria-label="Acesso ao SIGAC">
-        <button type="button" class="auth-tab active" data-auth-target="loginPanel">Entrar</button>
-        <button type="button" class="auth-tab" data-auth-target="registerPanel">Cadastrar</button>
-      </div>
-
-      <section id="loginPanel" class="auth-panel">
-        <form id="loginForm">
-          <div class="field">
-            <label for="email">E-mail</label>
-            <input id="email" type="email" placeholder="Digite seu e-mail" required>
+      <div class="login-hero">
+        <div class="login-brand">
+          <img src="Logo SIGAC-otimizada.png" alt="Logo SIGAC">
+          <div>
+            <h1>SIGAC</h1>
+            <p>Sistema Integrado de Gest&atilde;o de Atividades Complementares</p>
           </div>
-
-          <div class="field">
-            <label for="senha">Senha</label>
-            <input id="senha" type="password" placeholder="Digite sua senha" required>
-          </div>
-
-          <button type="submit" class="btn-login">Entrar</button>
-        </form>
-
-        <div class="login-footer">
-          <a href="resetarsenha.html">Esqueci minha senha</a>
         </div>
 
-        <div id="loginMessage" class="message info hidden"></div>
-      </section>
+        <div class="login-hero-copy">
+          <span class="login-kicker">Portal acadêmico</span>
+          <h2>Controle atividades, certificados e oportunidades em um único lugar.</h2>
+          <p>Um acesso rápido para acompanhar validações, pendências e próximas ações sem mudar a lógica atual do sistema.</p>
+        </div>
 
-      <section id="registerPanel" class="auth-panel hidden">
-        <form id="registerForm">
-          <div class="field">
-            <label for="registerName">Nome completo</label>
-            <input id="registerName" type="text" placeholder="Digite seu nome" required>
+        <div class="login-hero-points" aria-label="Destaques do SIGAC">
+          <div class="hero-point">
+            <strong>Fluxo unificado</strong>
+            <p>Aluno, coordenador e administrador com jornadas claras.</p>
+          </div>
+          <div class="hero-point">
+            <strong>Experiencia objetiva</strong>
+            <p>Entre e continue de onde parou com menos ruido visual.</p>
+          </div>
+        </div>
+
+        <div class="login-hero-footer">
+          <span>Ambiente acadêmico</span>
+          <strong>2026</strong>
+        </div>
+      </div>
+
+      <div class="login-auth">
+        <section id="loginPanel" class="auth-panel login-panel-surface">
+          <form id="loginForm">
+            <div class="field">
+              <label for="loginRole">Fun&ccedil;&atilde;o</label>
+              <select id="loginRole" required>
+                <option value="aluno">Aluno (Gradua&ccedil;&atilde;o e P&oacute;s)</option>
+                <option value="coordenador">Coordenador</option>
+                <option value="superadmin">Administrador</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="email">E-mail</label>
+              <input id="email" type="email" placeholder="Digite seu e-mail" required>
+            </div>
+
+            <div class="field">
+              <div class="field-heading">
+                <label for="senha">Senha</label>
+                <a href="resetarsenha.html">Esqueceu sua senha?</a>
+              </div>
+              <input id="senha" type="password" placeholder="Digite sua senha" required>
+            </div>
+
+            <button type="submit" class="btn-login">Entrar</button>
+          </form>
+
+          <div id="loginMessage" class="message info hidden"></div>
+        </section>
+
+        <section id="registerPanel" class="login-support-panel" aria-labelledby="accessGuideTitle">
+          <div class="support-panel-heading">
+            <span class="support-panel-kicker">Acessos</span>
+            <h3 id="accessGuideTitle">Como os acessos funcionam</h3>
           </div>
 
-          <div class="field">
-            <label for="registerEmail">E-mail</label>
-            <input id="registerEmail" type="email" placeholder="Digite seu e-mail" required>
+          <div class="access-flow">
+            <div class="flow-step">
+              <span>1</span>
+              <div>
+                <strong>Administrador</strong>
+                <p>Cadastra cursos e libera os acessos dos coordenadores.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <span>2</span>
+              <div>
+                <strong>Coordenador</strong>
+                <p>Cadastra alunos vinculados aos cursos sob sua responsabilidade.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <span>3</span>
+              <div>
+                <strong>Aluno</strong>
+                <p>Entra com o acesso recebido para enviar e acompanhar atividades.</p>
+              </div>
+            </div>
           </div>
 
-          <div class="field">
-            <label for="registerCourse">Curso</label>
-            <select id="registerCourse" required>
-              <option value="">Carregando cursos...</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="registerPassword">Senha</label>
-            <input id="registerPassword" type="password" placeholder="Crie uma senha" minlength="6" required>
-          </div>
-
-          <div class="field">
-            <label for="registerPasswordConfirm">Confirmar senha</label>
-            <input id="registerPasswordConfirm" type="password" placeholder="Repita a senha" minlength="6" required>
-          </div>
-
-          <button type="submit" class="btn-login">Criar cadastro</button>
-        </form>
-
-        <div id="registerMessage" class="message info hidden"></div>
-      </section>
+          <div id="registerMessage" class="message info hidden"></div>
+        </section>
+      </div>
     </div>
   </div>
 
   <script src="js/data.js"></script>
-  <script src="js/login.js"></script>
+  <script src="js/login.js?v=ui-refino-2026-04-26-login"></script>
+  <script src="js/custom-select.js"></script>
 </body>
 </html>

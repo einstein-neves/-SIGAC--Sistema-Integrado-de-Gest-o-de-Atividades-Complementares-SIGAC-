@@ -4,75 +4,206 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIGAC - Super Administrador</title>
-  <link rel="stylesheet" href="sigac.css">
+  <link rel="icon" type="image/png" href="Logo SIGAC-otimizada.png">
+  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<header class="console-header">
+  <div class="console-brand">
+    <img src="Logo SIGAC.png" alt="Logo SIGAC">
+    <span class="brand-slash">/</span>
+    <strong>SIGAC</strong>
+  </div>
+  <div class="console-context" aria-label="Contexto da tela">
+    <span>Painel Administrativo</span>
+    <strong>Super Administrador</strong>
+  </div>
+  <div class="console-actions">
+    <span class="status-pill"><span></span>Online</span>
+    <button type="button" class="header-button" data-section-jump="notificacoes" aria-label="Abrir notificações">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8A2.5 2.5 0 0 0 12 22Zm7-5-2-2v-4a5 5 0 0 0-4-4.9V4h-2v2.1A5 5 0 0 0 7 11v4l-2 2v1h14v-1Z"/></svg>
+      <span>Avisos</span>
+    </button>
+    <button type="button" class="header-button light" data-section-jump="relatorios">
+      <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5V3Zm3 14h2v-6H8v6Zm3 0h2V7h-2v10Zm3 0h2v-4h-2v4Z"/></svg>
+      <span>Relatórios</span>
+    </button>
+  </div>
+</header>
+
 <div class="layout">
   <aside class="sidebar">
-    <div class="brand"><h2>SIGAC</h2><p>Super Admin</p></div>
-    <div class="user-box">
-      <strong id="userName">Carregando...</strong>
-      <span id="userRole">Administração Global</span>
+    <svg class="sidebar-icons" aria-hidden="true">
+      <symbol id="icon-dashboard" viewBox="0 0 24 24"><path d="M4 13h7V4H4v9Zm9 7h7v-7h-7v7ZM4 20h7v-5H4v5Zm9-9h7V4h-7v7Z"/></symbol>
+      <symbol id="icon-users" viewBox="0 0 24 24"><path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8.5 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2 21a6 6 0 0 1 12 0H2Zm12.5 0a7.5 7.5 0 0 0-2.1-5.2A5.5 5.5 0 0 1 22 19.5V21h-7.5Z"/></symbol>
+      <symbol id="icon-courses" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H7a3 3 0 0 0-3 3V5.5ZM7 16h11V5H6.5A.5.5 0 0 0 6 5.5v10.7c.3-.1.7-.2 1-.2Z"/></symbol>
+      <symbol id="icon-link" viewBox="0 0 24 24"><path d="M8.5 12a3.5 3.5 0 0 1 3.5-3.5h2v2h-2a1.5 1.5 0 0 0 0 3h2v2h-2A3.5 3.5 0 0 1 8.5 12Zm-5 0A5.5 5.5 0 0 1 9 6.5h3v2H9a3.5 3.5 0 1 0 0 7h3v2H9A5.5 5.5 0 0 1 3.5 12Zm8.5 1h8v-2h-8v2Zm0-6.5h3a5.5 5.5 0 0 1 0 11h-3v-2h3a3.5 3.5 0 1 0 0-7h-3v-2Z"/></symbol>
+      <symbol id="icon-rules" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2Zm2 5h8V6H8v2Zm0 5h8v-2H8v2Zm0 4h5v-2H8v2Z"/></symbol>
+      <symbol id="icon-opportunities" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 5.7 3.2L12 10.7 6.3 7.5 12 4.3ZM5 9.2l6 3.4v6.7l-6-3.4V9.2Zm8 10.1v-6.7l6-3.4v6.7l-6 3.4Z"/></symbol>
+      <symbol id="icon-submissions" viewBox="0 0 24 24"><path d="M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 4h6V7H9v2Zm0 4h6v-2H9v2Zm0 4h4v-2H9v2Z"/></symbol>
+      <symbol id="icon-certificate" viewBox="0 0 24 24"><path d="M4 4h16v11H4V4Zm2 2v7h12V6H6Zm3 3h6V7H9v2Zm7 7 2 1.2 2-1.2V22l-2-1.2-2 1.2v-6Zm-10 0h8v2H6v-2Z"/></symbol>
+      <symbol id="icon-reports" viewBox="0 0 24 24"><path d="M5 3h14v18H5V3Zm3 14h2v-6H8v6Zm3 0h2V7h-2v10Zm3 0h2v-4h-2v4Z"/></symbol>
+      <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8A2.5 2.5 0 0 0 12 22Zm7-5-2-2v-4a5 5 0 0 0-4-4.9V4h-2v2.1A5 5 0 0 0 7 11v4l-2 2v1h14v-1Z"/></symbol>
+      <symbol id="icon-logs" viewBox="0 0 24 24"><path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 3h8v2H8V9Zm0 4h8v2H8v-2Z"/></symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M13 2v3.1a7 7 0 0 1 2 .8l2.2-2.2 3.1 3.1L18.1 9a7 7 0 0 1 .8 2H22v4h-3.1a7 7 0 0 1-.8 2l2.2 2.2-3.1 3.1L15 20.1a7 7 0 0 1-2 .8V24H9v-3.1a7 7 0 0 1-2-.8l-2.2 2.2-3.1-3.1L3.9 17a7 7 0 0 1-.8-2H0v-4h3.1a7 7 0 0 1 .8-2L1.7 6.8l3.1-3.1L7 5.9a7 7 0 0 1 2-.8V2h4Zm-2 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/></symbol>
+    </svg>
+
+    <div class="sidebar-section-label">Organização</div>
+    <div class="user-box" role="button" tabindex="0" aria-label="Organização atual">
+      <span id="userInitial" class="org-avatar" aria-hidden="true">A</span>
+      <span class="org-copy">
+        <strong id="userName">Carregando...</strong>
+        <span id="userRole">Administração Global</span>
+      </span>
+      <span class="org-chevron" aria-hidden="true"></span>
     </div>
+
     <nav class="menu">
-      <button data-section="dashboard" class="active">Dashboard</button>
-      <button data-section="usuarios">Usuários</button>
-      <button data-section="cursos">Cursos</button>
-      <button data-section="vinculos">Vínculos</button>
-      <button data-section="oportunidades">Oportunidades</button>
-      <button data-section="certificados">Certificados</button>
-      <button data-section="configuracoes">Configurações</button>
+      <div class="menu-group-label">Geral</div>
+      <button data-section="dashboard" class="active"><svg class="nav-icon"><use href="#icon-dashboard"></use></svg><span class="menu-label">Dashboard</span></button>
+      <div class="menu-group-label">Gestão</div>
+      <button data-section="usuarios"><svg class="nav-icon"><use href="#icon-users"></use></svg><span class="menu-label">Usuários</span><span id="menuBadgeUsers" class="menu-badge">0</span></button>
+      <button data-section="cursos"><svg class="nav-icon"><use href="#icon-courses"></use></svg><span class="menu-label">Cursos</span><span id="menuBadgeCourses" class="menu-badge">0</span></button>
+      <button data-section="vinculos"><svg class="nav-icon"><use href="#icon-link"></use></svg><span class="menu-label">Vínculos</span></button>
+      <button data-section="regras"><svg class="nav-icon"><use href="#icon-rules"></use></svg><span class="menu-label">Regras</span></button>
+      <div class="menu-group-label">Atividades</div>
+      <button data-section="oportunidades"><svg class="nav-icon"><use href="#icon-opportunities"></use></svg><span class="menu-label">Oportunidades</span></button>
+      <button data-section="envios"><svg class="nav-icon"><use href="#icon-submissions"></use></svg><span class="menu-label">Envios de atividades</span><span id="menuBadgeSubmissions" class="menu-badge attention">0</span></button>
+      <button data-section="certificados"><svg class="nav-icon"><use href="#icon-certificate"></use></svg><span class="menu-label">Certificados</span><span id="menuBadgeCertificates" class="menu-badge attention">0</span></button>
+      <div class="menu-group-label">Sistema</div>
+      <button data-section="relatorios"><svg class="nav-icon"><use href="#icon-reports"></use></svg><span class="menu-label">Relatórios</span></button>
+      <button data-section="notificacoes"><svg class="nav-icon"><use href="#icon-bell"></use></svg><span class="menu-label">Notificações</span><span id="menuBadgeNotifications" class="menu-badge">0</span></button>
+      <button data-section="logs"><svg class="nav-icon"><use href="#icon-logs"></use></svg><span class="menu-label">Auditoria</span></button>
+      <button data-section="configuracoes"><svg class="nav-icon"><use href="#icon-settings"></use></svg><span class="menu-label">Configurações</span></button>
     </nav>
     <button id="logoutBtn" class="logout">Sair</button>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div>
+      <div class="topbar-copy">
         <h1>Painel Administrativo</h1>
-        <p>Gerencie cursos, usuários, metas institucionais e oportunidades.</p>
+        <p>Bem-vindo(a) de volta. Aqui está o resumo operacional da plataforma.</p>
+      </div>
+      <div class="topbar-actions">
+        <label class="global-search" aria-label="Busca global">
+          <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a6 6 0 0 1 4.8 9.6l4.3 4.3-1.4 1.4-4.3-4.3A6 6 0 1 1 10 4Zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+          <input id="globalSearchInput" type="search" placeholder="Buscar aluno, curso, envio ou certificado...">
+        </label>
+        <button type="button" class="secondary" data-section-jump="relatorios">Exportar</button>
+        <button type="button" class="secondary" data-section-jump="notificacoes">Enviar comunicado</button>
       </div>
     </div>
 
     <section id="dashboard" class="panel-section">
-      <div id="metricsGrid" class="grid metrics"></div>
-      <div class="dual-grid" style="margin-top:18px;">
-        <div class="card"><h2>Taxa de aprovação por curso</h2><canvas id="chartAprovacaoCursos"></canvas></div>
-        <div class="card"><h2>Status dos envios</h2><canvas id="chartPendencias"></canvas></div>
+      <div class="dashboard-toolbar">
+        <div class="field compact"><label>Curso</label><select id="dashboardCourseFilter"><option>Todos os cursos</option></select></div>
+        <div class="field compact"><label>Período</label><select><option>01/04/2026 - 30/04/2026</option><option>Este semestre</option><option>Este ano</option></select></div>
+        <div class="field compact"><label>Status</label><select><option>Todos</option><option>Pendente</option><option>Aprovado</option><option>Rejeitado</option></select></div>
       </div>
-      <div class="card" style="margin-top:18px;">
-        <h2>Cursos e total de alunos</h2>
-        <div id="coursesDashboardList" class="list"></div>
+
+      <div class="card alert-strip">
+        <div id="alertsList" class="alert-row"></div>
+      </div>
+
+      <div class="dashboard-divider" aria-hidden="true"></div>
+
+      <div id="metricsGrid" class="grid metrics"></div>
+
+      <div class="dashboard-grid">
+        <div class="card chart-card wide">
+          <div class="chart-head"><div><h2>Taxa de aprovação por curso</h2><p>Comparativo de desempenho dos cursos ativos.</p></div></div>
+          <div class="chart-box chart-box--lg">
+            <canvas id="chartAprovacaoCursos"></canvas>
+          </div>
+        </div>
+        <div class="card chart-card">
+          <div class="chart-head"><div><h2>Status dos envios</h2><p>Distribuição operacional das solicitações.</p></div></div>
+          <div class="chart-box chart-box--donut">
+            <canvas id="chartPendencias"></canvas>
+          </div>
+        </div>
+        <div class="card category-card">
+          <div class="chart-head"><div><h2>Horas aprovadas por categoria</h2><p>Ranking das categorias com maior avanço.</p></div></div>
+          <div id="categoryHoursList" class="stack-list"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid lower">
+        <div class="card wide dashboard-feature dashboard-feature-submissions">
+          <div class="section-title"><h2>Últimas solicitações</h2><button type="button" class="text-button" data-section-jump="envios">Ver todas</button></div>
+          <div id="latestSubmissionsList" class="submission-showcase"></div>
+        </div>
+        <div class="card dashboard-feature dashboard-feature-risk">
+          <div class="section-title"><h2>Alunos em risco</h2><button type="button" class="text-button" data-section-jump="relatorios">Ver relatório</button></div>
+          <div id="riskStudentsList" class="list"></div>
+        </div>
+        <div class="card dashboard-feature dashboard-feature-actions">
+          <h2>Ações rápidas</h2>
+          <div id="dashboardQuickActions" class="quick-actions"></div>
+        </div>
+      </div>
+
+      <div class="card recent-activity-card">
+        <div class="section-title"><h2>Atividades recentes</h2><button type="button" class="text-button" data-section-jump="logs">Abrir auditoria</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Aluno</th><th>Curso</th><th>Status</th><th>Data</th><th>Ação</th></tr></thead>
+            <tbody id="recentActivityTable"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
-    <section id="usuarios" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Novo usuário</h2>
+    <section id="usuarios" class="panel-section hidden admin-users-section">
+      <div class="admin-users-layout">
+        <div class="card admin-user-form-card">
+          <h2 id="userFormTitle">Novo usuário</h2>
+          <p class="small admin-user-form-note">Cadastro individual de alunos e coordenadores</p>
           <form id="userForm">
             <div class="field"><label for="userNameInput">Nome</label><input id="userNameInput" type="text" required></div>
             <div class="field"><label for="userEmailInput">E-mail</label><input id="userEmailInput" type="email" required></div>
             <div class="field"><label for="userPasswordInput">Senha</label><input id="userPasswordInput" type="text" required></div>
-            <div class="field"><label for="userTypeInput">Tipo</label><select id="userTypeInput" required><option value="aluno">Aluno</option><option value="coordenador">Coordenador</option></select></div>
-            <div class="field"><label for="userCourseInput">Curso inicial do aluno</label><select id="userCourseInput"></select></div>
-            <div class="field"><label for="userCoordinatorCoursesInput">Cursos iniciais do coordenador</label><select id="userCoordinatorCoursesInput" multiple size="4"></select></div>
-            <button type="submit">Cadastrar usuário</button>
+            <div class="field"><label for="userTypeInput">Função</label><select id="userTypeInput" required><option value="aluno">Aluno</option><option value="coordenador">Coordenador</option></select></div>
+            <div class="field"><label for="userStatusInput">Status inicial</label><select id="userStatusInput"><option value="1">Ativo</option><option value="0">Inativo</option></select></div>
+            <div class="field" id="userCoursesField">
+              <label id="userCoursesLabel" for="userCoursesInput">Curso vinculado</label>
+              <select id="userCoursesInput"></select>
+              <span id="userCoursesHelp" class="small">Selecione o curso inicial vinculado ao usuário.</span>
+            </div>
+            <button id="userSubmitButton" type="submit">Cadastrar usuário</button>
           </form>
           <div id="userFormMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
-          <h2>Usuários cadastrados</h2>
-          <div class="table-wrap">
-            <table>
+
+        <div class="card admin-users-list-card">
+          <div class="section-title"><h2>Usuários cadastrados</h2><span class="small">Filtros por perfil, curso e status</span></div>
+          <div class="admin-users-toolbar">
+            <label class="admin-user-search" for="usersSearchInput">
+              <span>Buscar</span>
+              <input id="usersSearchInput" type="search" placeholder="Nome ou e-mail">
+            </label>
+            <div class="admin-users-filters">
+              <label for="usersProfileFilter"><span>Perfil</span><select id="usersProfileFilter"><option value="">Todos os perfis</option><option value="aluno">Aluno</option><option value="coordenador">Coordenador</option></select></label>
+              <label for="usersCourseFilter"><span>Curso</span><select id="usersCourseFilter"><option value="">Todos os cursos</option></select></label>
+              <label for="usersStatusFilter"><span>Status</span><select id="usersStatusFilter"><option value="">Todos os status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></label>
+            </div>
+          </div>
+          <div class="small admin-users-result-count" id="usersListMeta">Filtros por perfil, curso e status</div>
+          <div class="table-wrap admin-users-table-wrap">
+            <table class="admin-users-table">
               <thead>
-                <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Vínculo</th><th>Status</th><th>Ação</th></tr>
+                <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Vínculo</th><th>Status</th><th>Último acesso</th><th>Ação</th></tr>
               </thead>
               <tbody id="usersTableBody"></tbody>
             </table>
           </div>
         </div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <h2>Perfil do usuário</h2>
+        <div id="userProfilePreview" class="profile-grid"></div>
       </div>
     </section>
 
@@ -92,67 +223,247 @@
           </form>
           <div id="courseFormMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
-          <h2>Cursos ativos</h2>
-          <div id="coursesList" class="list"></div>
+        <div class="card admin-courses-list-card">
+          <div class="section-title admin-courses-title">
+            <div>
+              <h2>Cursos ativos</h2>
+              <span id="coursesListMeta" class="small">Resumo de cursos, alunos, coordenadores e regras</span>
+            </div>
+          </div>
+          <label class="admin-course-search" for="courseSearchInput">
+            <span>Buscar curso</span>
+            <input id="courseSearchInput" type="search" placeholder="Nome, sigla, area ou turno">
+          </label>
+          <div id="coursesList" class="admin-courses-grid"></div>
         </div>
+      </div>
+      <div class="card admin-courses-table-card">
+        <h2>Visão por curso</h2>
+        <span class="small">Comparativo rápido dos indicadores acadêmicos.</span>
+        <div id="courseDeepDiveList" class="course-tabs-grid"></div>
       </div>
     </section>
 
-    <section id="vinculos" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Vincular aluno a curso</h2>
+    <section id="vinculos" class="panel-section hidden admin-links-section">
+      <div class="admin-links-flow-grid">
+        <div class="card admin-link-flow-card student-link-flow">
+          <div class="admin-link-card-head">
+            <span class="admin-link-step">1</span>
+            <div>
+              <h2>Vincular aluno a curso</h2>
+              <p class="small">Escolha o aluno, confirme o curso e salve o vínculo acadêmico principal.</p>
+            </div>
+          </div>
           <form id="studentLinkForm">
-            <div class="field"><label for="studentSelect">Aluno</label><select id="studentSelect" required></select></div>
-            <div class="field"><label for="studentCourseSelect">Curso</label><select id="studentCourseSelect" required></select></div>
+            <div class="admin-link-form-grid">
+              <div class="field">
+                <label for="studentSelect">Aluno</label>
+                <select id="studentSelect" required></select>
+                <span class="small">A lista mostra apenas usuarios com perfil de aluno.</span>
+              </div>
+              <div class="field">
+                <label for="studentCourseSelect">Curso</label>
+                <select id="studentCourseSelect" required></select>
+                <span class="small">Este curso será usado nos painéis e relatórios do aluno.</span>
+              </div>
+            </div>
+            <div class="admin-link-action-row">
+              <span class="small">Revise os dois campos antes de salvar.</span>
+              <button type="submit">Salvar vinculo do aluno</button>
+            </div>
             <button type="submit">Salvar vínculo do aluno</button>
           </form>
           <div id="studentLinkMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
-          <h2>Vincular coordenador a cursos</h2>
+        <div class="card admin-link-flow-card coordinator-link-flow">
+          <div class="admin-link-card-head">
+            <span class="admin-link-step">2</span>
+            <div>
+              <h2>Vincular coordenador a cursos</h2>
+              <p class="small">Selecione o coordenador e marque todos os cursos que ele acompanha.</p>
+            </div>
+          </div>
           <form id="coordinatorLinkForm">
-            <div class="field"><label for="coordinatorSelect">Coordenador</label><select id="coordinatorSelect" required></select></div>
-            <div class="field"><label for="coordinatorCoursesSelect">Cursos</label><select id="coordinatorCoursesSelect" multiple size="6" required></select></div>
+            <div class="admin-link-form-grid">
+              <div class="field">
+                <label for="coordinatorSelect">Coordenador</label>
+                <select id="coordinatorSelect" required></select>
+                <span class="small">A lista mostra apenas usuarios com perfil de coordenador.</span>
+              </div>
+              <div class="field">
+                <label for="coordinatorCoursesSelect">Cursos</label>
+                <select id="coordinatorCoursesSelect" multiple size="6" required></select>
+                <span class="small">Use a seleção multipla para manter todos os cursos do coordenador.</span>
+              </div>
+            </div>
+            <div class="admin-link-action-row">
+              <span class="small">Salvar substitui a seleção atual pelos cursos marcados.</span>
+              <button type="submit">Salvar vínculos do coordenador</button>
+            </div>
             <button type="submit">Salvar vínculos do coordenador</button>
           </form>
           <div id="coordinatorLinkMessage" class="message info hidden"></div>
         </div>
       </div>
+      <div class="card admin-links-history-card">
+        <h2>Histórico de vínculos</h2>
+        <span class="small">Resumo dos alunos e coordenadores já associados a cursos.</span>
+        <div id="linksHistoryList" class="admin-links-history-grid"></div>
+      </div>
     </section>
 
-    <section id="oportunidades" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Nova oportunidade</h2>
-          <form id="opportunityForm">
-            <div class="field"><label for="oppTitle">Título</label><input id="oppTitle" type="text" required></div>
-            <div class="field"><label for="oppDesc">Descrição</label><textarea id="oppDesc" required></textarea></div>
-            <div class="field"><label for="oppHours">Horas extras</label><input id="oppHours" type="number" min="1" required></div>
-            <button type="submit">Lançar oportunidade</button>
+    <section id="regras" class="panel-section hidden admin-rules-section">
+      <div class="dual-grid admin-rules-layout">
+        <div class="card admin-rule-form-card">
+          <div class="section-title">
+            <div>
+              <h2>Nova regra de atividade</h2>
+              <span class="small">Defina limites, exigências e validação por curso.</span>
+            </div>
+          </div>
+          <form id="ruleForm">
+            <div class="admin-rule-form-grid">
+            <div class="field"><label for="ruleCourseSelect">Curso</label><select id="ruleCourseSelect" required></select></div>
+            <div class="field"><label for="ruleCategoryInput">Categoria</label><select id="ruleCategoryInput" required><option>Ensino</option><option>Pesquisa</option><option>Extensão</option><option>Eventos</option><option>Cursos livres</option><option>Monitoria</option><option>Projetos</option></select></div>
+            <div class="admin-rule-hours-grid">
+              <div class="field"><label for="ruleLimitInput">Limite máximo</label><input id="ruleLimitInput" type="number" min="1" value="40" required></div>
+              <div class="field"><label for="ruleMinInput">Carga mínima</label><input id="ruleMinInput" type="number" min="0" value="8"></div>
+            </div>
+            </div>
+            <div class="rule-options">
+              <label class="toggle-card">
+                <input id="ruleCertificateInput" type="checkbox" checked>
+                <span class="toggle-copy">
+                  <strong>Exige certificado</strong>
+                  <small>O aluno precisa anexar comprovante.</small>
+                </span>
+                <span class="toggle-switch" aria-hidden="true"></span>
+              </label>
+              <label class="toggle-card">
+                <input id="ruleApprovalInput" type="checkbox" checked>
+                <span class="toggle-copy">
+                  <strong>Precisa de aprovação manual</strong>
+                  <small>Envios passam por revisão antes de pontuar.</small>
+                </span>
+                <span class="toggle-switch" aria-hidden="true"></span>
+              </label>
+            </div>
+            <button type="submit">Salvar regra</button>
           </form>
-          <div id="opportunityFormMessage" class="message info hidden"></div>
+          <div id="ruleFormMessage" class="message info hidden"></div>
         </div>
-        <div class="card">
-          <h2>Oportunidades lançadas</h2>
-          <div id="opportunitiesAdminList" class="list"></div>
+        <div class="card admin-rules-list-card">
+          <div class="section-title">
+            <div>
+              <h2>Regras cadastradas</h2>
+              <span id="rulesListMeta" class="small">Filtros por curso e categoria</span>
+            </div>
+          </div>
+          <div class="admin-rules-filters">
+            <label for="rulesCourseFilter"><span>Curso</span><select id="rulesCourseFilter"><option value="">Todos os cursos</option></select></label>
+            <label for="rulesCategoryFilter"><span>Categoria</span><select id="rulesCategoryFilter"><option value="">Todas as categorias</option></select></label>
+          </div>
+          <div id="rulesList" class="admin-rules-grid"></div>
         </div>
       </div>
     </section>
 
+    <section id="oportunidades" class="panel-section hidden admin-opportunities-section">
+      <div class="dual-grid admin-opportunities-layout">
+        <div class="card admin-opportunity-form-card">
+          <div class="section-title">
+            <div>
+              <h2>Nova oportunidade</h2>
+              <span class="small">Cadastre a chamada e informe a carga horária para os alunos.</span>
+            </div>
+          </div>
+          <form id="opportunityForm">
+            <div class="admin-opportunity-form-grid">
+              <div class="field admin-opportunity-title-field"><label for="oppTitle">Título</label><input id="oppTitle" type="text" required></div>
+              <div class="field"><label for="oppHours">Horas extras</label><input id="oppHours" type="number" min="1" required></div>
+              <div class="field"><label>Categoria</label><select><option>Palestra</option><option>Curso livre</option><option>Workshop</option><option>Projeto de extensão</option><option>Hackathon</option></select></div>
+              <div class="field"><label>Status</label><select><option>Aberta</option><option>Encerrada</option><option>Cancelada</option></select></div>
+              <div class="field admin-opportunity-description-field"><label for="oppDesc">Descrição</label><textarea id="oppDesc" required></textarea></div>
+            </div>
+            <button type="submit">Lançar oportunidade</button>
+          </form>
+          <div id="opportunityFormMessage" class="message info hidden"></div>
+        </div>
+        <div class="card admin-opportunities-list-card">
+          <h2>Oportunidades lançadas</h2>
+          <span id="opportunitiesListMeta" class="small">Busca e filtros de oportunidades</span>
+          <div class="admin-opportunities-toolbar">
+            <label class="admin-opportunity-search" for="opportunitySearchInput"><span>Buscar</span><input id="opportunitySearchInput" type="search" placeholder="Título ou descricao"></label>
+            <label for="opportunityStatusFilter"><span>Status</span><select id="opportunityStatusFilter"><option value="">Todos os status</option><option value="Aberta">Aberta</option><option value="Encerrada">Encerrada</option><option value="Cancelada">Cancelada</option></select></label>
+            <label for="opportunityCategoryFilter"><span>Categoria</span><select id="opportunityCategoryFilter"><option value="">Todas as categorias</option><option>Palestra</option><option>Curso livre</option><option>Workshop</option><option>Projeto de extensão</option><option>Hackathon</option></select></label>
+          </div>
+          <div id="opportunitiesAdminList" class="admin-opportunities-grid"></div>
+        </div>
+      </div>
+    </section>
 
-    <section id="certificados" class="panel-section hidden">
-      <div class="dual-grid">
-        <div class="card">
-          <h2>Fila de certificados</h2>
+    <section id="envios" class="panel-section hidden admin-submissions-section">
+      <div class="card admin-submissions-queue-card">
+        <div class="section-title"><h2>Fila de envios e solicitações</h2><span class="small">Priorizada por pendência, OCR divergente e antiguidade</span></div>
+        <div class="admin-submissions-filters">
+          <label for="submissionStatusFilter"><span>Status</span><select id="submissionStatusFilter"><option value="">Todos os status</option><option value="em_analise">Em análise</option><option value="pendente">Pendente</option><option value="correcao">Correção</option><option value="aprovado">Aprovado</option><option value="rejeitado">Rejeitado</option></select></label>
+          <label for="submissionCourseFilter"><span>Curso</span><select id="submissionCourseFilter"><option value="">Todos os cursos</option></select></label>
+          <label for="submissionStudentFilter"><span>Aluno</span><select id="submissionStudentFilter"><option value="">Todos os alunos</option></select></label>
+          <label for="submissionTypeFilter"><span>Tipo</span><select id="submissionTypeFilter"><option value="">Todos os tipos</option></select></label>
+        </div>
+        <div id="submissionsQueueList" class="admin-submissions-grid"></div>
+      </div>
+      <div class="dual-grid admin-submissions-support">
+        <div class="card"><h2>Linha do tempo da submissão</h2><div id="submissionTimelineList" class="timeline"></div></div>
+        <div class="card"><h2>Central de correções</h2><div id="correctionsList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="certificados" class="panel-section hidden admin-certificates-section">
+      <div class="card admin-certificates-queue-card">
+          <div class="section-title"><div><h2>Fila de certificados</h2><span id="certificatesQueueMeta" class="small">Revisão final com apoio da pre-validação OCR</span></div></div>
           <div class="notice small">O OCR faz uma pré-validação. A decisão final continua com o administrador.</div>
           <div id="certificateAdminStats" class="grid metrics"></div>
+        <div class="admin-certificates-toolbar">
+          <label for="certificateAdminStatusFilter"><span>Status admin</span><select id="certificateAdminStatusFilter"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="aprovado">Aprovado</option><option value="rejeitado">Rejeitado</option></select></label>
+          <label for="certificateOcrStatusFilter"><span>Status OCR</span><select id="certificateOcrStatusFilter"><option value="">Todos OCR</option><option value="nao_processado">Não processado</option><option value="analise_manual">Análise manual</option><option value="aprovado_automatico">Aprovado automático</option><option value="rejeitado_automatico">Rejeitado automático</option></select></label>
         </div>
+        <div id="certificatesAdminList" class="admin-certificates-grid"></div>
+      </div>
+    </section>
+
+    <section id="relatorios" class="panel-section hidden admin-reports-section">
+      <div class="grid metrics admin-report-metrics">
+        <div class="card"><h3>Concluíram as horas</h3><div id="reportDoneCount" class="metric-value">0</div></div>
+        <div class="card admin-report-metric-card danger"><span>Risco</span><h3>Abaixo da meta</h3><div id="reportRiskCount" class="metric-value">0</div><small>Prioridade de acompanhamento</small></div>
+        <div class="card admin-report-metric-card warning"><span>Qualidade</span><h3>Rejeições</h3><div id="reportRejectedCount" class="metric-value">0</div><small>Envios que precisam revisao</small></div>
+        <div class="card"><h3>Exportações</h3><div class="metric-value">PDF CSV</div></div>
+      </div>
+      <div class="dual-grid admin-reports-layout">
+        <div class="card admin-risk-report-card"><h2>Risco de não conclusão</h2><div id="riskReportList" class="admin-risk-list"></div></div>
+        <div class="card admin-report-catalog-card"><h2>Relatórios disponíveis</h2><div id="reportsList" class="admin-report-catalog"></div></div>
+      </div>
+    </section>
+
+    <section id="notificacoes" class="panel-section hidden">
+      <div class="dual-grid">
         <div class="card">
-          <h2>Certificados recebidos</h2>
-          <div id="certificatesAdminList" class="list"></div>
+          <h2>Novo comunicado</h2>
+          <form>
+            <div class="field"><label>Modelo</label><select><option>Solicitação recebida</option><option>Atividade aprovada</option><option>Correção solicitada</option><option>Prazo se aproximando</option></select></div>
+            <div class="field"><label>Destinatários</label><select><option>Todos os alunos</option><option>Alunos em risco</option><option>Coordenadores</option></select></div>
+            <div class="field"><label>Mensagem</label><textarea>Olá, acompanhe suas pendências no SIGAC.</textarea></div>
+            <button type="button">Enviar comunicado</button>
+          </form>
         </div>
+        <div class="card"><h2>Histórico de comunicação</h2><div id="notificationsList" class="list"></div></div>
+      </div>
+    </section>
+
+    <section id="logs" class="panel-section hidden">
+      <div class="card">
+        <div class="section-title"><h2>Logs e auditoria</h2><span class="small">Rastreabilidade de aprovações, vínculos, regras e comunicações</span></div>
+        <div id="auditLogList" class="timeline"></div>
       </div>
     </section>
 
@@ -162,16 +473,32 @@
           <h2>Parâmetros do sistema</h2>
           <form id="settingsForm">
             <div class="field"><label for="horasMeta">Meta global de horas</label><input id="horasMeta" type="number" min="1" required></div>
-            <div class="field"><label><input id="emailToggle" type="checkbox"> Habilitar notificações por e-mail simuladas</label></div>
-            <div class="field"><label><input id="ocrToggle" type="checkbox"> Habilitar pré-validação OCR de certificados</label></div>
+            <div class="rule-options">
+              <label class="toggle-card">
+                <input id="emailToggle" type="checkbox">
+                <span class="toggle-copy">
+                  <strong>Habilitar notificações por e-mail simuladas</strong>
+                  <small>Registra envios na fila local para auditoria.</small>
+                </span>
+                <span class="toggle-switch" aria-hidden="true"></span>
+              </label>
+              <label class="toggle-card">
+                <input id="ocrToggle" type="checkbox">
+                <span class="toggle-copy">
+                  <strong>Habilitar pré-validação OCR de certificados</strong>
+                  <small>Permite processar certificados antes da revisão final.</small>
+                </span>
+                <span class="toggle-switch" aria-hidden="true"></span>
+              </label>
+            </div>
             <button type="submit">Salvar configurações</button>
           </form>
           <div class="actions-row" style="margin-top:12px;">
-            <a id="downloadEmailLog" class="button secondary" download="sigac-email-log.txt">Baixar log de e-mails simulados</a>
+            <button id="downloadEmailLog" type="button" class="secondary">Baixar log de e-mails simulados</button>
             <button id="resetDemoBtn" type="button" class="secondary">Resetar dados de demonstração</button>
           </div>
           <div id="settingsMessage" class="message info hidden"></div>
-          <div class="notice small" style="margin-top:12px;">O OCR agora está preparado como pré-validação local. Quando o banco/API forem integrados, basta trocar a camada de dados para persistir os resultados.</div>
+          <div class="notice small" style="margin-top:12px;">O OCR agora está preparado como pré-validação local. Quando o banco e a API forem integrados, basta trocar a camada de dados para persistir os resultados.</div>
         </div>
         <div class="card">
           <h2>Últimos e-mails simulados</h2>
@@ -182,8 +509,9 @@
   </main>
 </div>
 
-<script src="js/data.js"></script>
+<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
 <script src="js/ocr.js"></script>
-<script src="js/admin.js"></script>
+<script src="js/admin.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/custom-select.js"></script>
 </body>
 </html>
