@@ -1,0 +1,27 @@
+{
+  "name": "SIGAC - Sistema Integrado de Gestao de Atividades Complementares",
+  "short_name": "SIGAC",
+  "description": "PWA academico para gestao de atividades complementares, certificados, coordenacao e administracao.",
+  "lang": "pt-BR",
+  "start_url": "/loginsigac.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#f97316",
+  "background_color": "#111315",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/sigac-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/sigac-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

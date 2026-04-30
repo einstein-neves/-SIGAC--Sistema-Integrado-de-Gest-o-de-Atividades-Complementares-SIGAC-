@@ -348,7 +348,7 @@
               <label class="toggle-card settings-toggle-card" id="ocrToggleCard">
                 <input id="ocrToggle" type="checkbox">
                 <span class="toggle-copy">
-                  <strong>Pr?-validação OCR de certificados</strong>
+                  <strong>Pré-validação OCR de certificados</strong>
                   <small>Permite processar certificados antes da revisão final do administrador.</small>
                 </span>
                 <span class="toggle-switch" aria-hidden="true"></span>
@@ -909,8 +909,17 @@
     return gradient;
   }
 
+  function renderChartUnavailable(message = 'Grafico indisponivel no momento.') {
+    document.querySelectorAll('.chart-box').forEach((box) => {
+      box.innerHTML = `<div class="chart-fallback">${escapeHtml(message)}</div>`;
+    });
+  }
+
   function renderCharts(data) {
-    if (!window.Chart) return;
+    if (!window.Chart) {
+      renderChartUnavailable('Nao foi possivel carregar a biblioteca de graficos. Recarregue a pagina ou verifique os arquivos do pacote.');
+      return;
+    }
     window.SIGACCharts?.ensureDefaults();
     const approvalCanvas = document.getElementById('chartAprovacaoCursos');
     const statusCanvas = document.getElementById('chartPendencias');
@@ -939,7 +948,7 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillStyle = '#1e3a5f';
+        ctx.fillStyle = '#f5f7f4';
         ctx.font = '600 11px Inter, system-ui, sans-serif';
         meta.data.forEach((bar, index) => {
           const value = Number(dataset.data[index] || 0);
@@ -959,10 +968,10 @@
         const centerY = (chartArea.top + chartArea.bottom) / 2;
         ctx.save();
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#1e3a5f';
-        ctx.font = '700 28px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 28px Inter, system-ui, sans-serif';
         ctx.fillText(String(statusTotal), centerX, centerY - 2);
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = '#ffffff';
         ctx.font = '500 11px Inter, system-ui, sans-serif';
         ctx.fillText('envios totais', centerX, centerY + 18);
         ctx.restore();
@@ -981,14 +990,14 @@
           data: approvalValues,
           backgroundColor: (context) => {
             const { chart } = context;
-            if (!chart.chartArea) return '#f28c00';
+            if (!chart.chartArea) return '#ff8a1f';
             return createVerticalGradient(chart.ctx, chart.chartArea, [
-              [0, '#1f5fa8'],
-              [0.42, '#2f80d0'],
-              [1, '#7bb8f2']
+              [0, '#ffba73'],
+              [0.42, '#ff9342'],
+              [1, '#d96a14']
             ]);
           },
-          borderColor: '#1f5fa8',
+          borderColor: '#ffb56b',
           borderWidth: 1,
           borderRadius: 10,
           borderSkipped: false,
@@ -1011,7 +1020,7 @@
             ticks: {
               stepSize: 25,
               padding: 8,
-              color: '#64748b',
+              color: '#9ca3af',
               font: { size: 12, weight: '500' },
               callback: (value) => `${value}%`
             }
@@ -1020,7 +1029,7 @@
             grid: { display: false },
             ticks: {
               padding: 10,
-              color: '#334155',
+              color: '#f4f5f6',
               font: { size: 12, weight: '600' }
             }
           })
@@ -1029,8 +1038,8 @@
           legend: { display: false },
           tooltip: charts.createTooltip({
             displayColors: false,
-            backgroundColor: '#ffffff',
-            borderColor: 'rgba(15, 23, 42, 0.12)',
+            backgroundColor: '#181a1d',
+            borderColor: 'rgba(255, 138, 31, 0.28)',
             callbacks: {
               label: (context) => `${context.parsed.y}% de aprovação`
             }
@@ -1046,8 +1055,8 @@
         labels: ['Pendentes', 'Aprovados', 'Rejeitados', 'Correção solicitada'],
         datasets: [{
           data: statusValues,
-          backgroundColor: ['#f28c00', '#22c55e', '#ef4444', '#facc15'],
-          borderColor: '#ffffff',
+          backgroundColor: ['#ff8a1f', '#34d399', '#ff6f86', '#f4bf52'],
+          borderColor: '#181a1d',
           borderWidth: 4,
           spacing: 3,
           borderRadius: 10,
@@ -1070,7 +1079,7 @@
                     text: `${label}  ${value} (${share}%)`,
                     fillStyle: colors[index],
                     strokeStyle: colors[index],
-                    fontColor: '#334155',
+                    fontColor: '#ffffff',
                     hidden: !chart.getDataVisibility(index),
                     index,
                     lineWidth: 0,
@@ -1082,7 +1091,7 @@
           }),
           tooltip: charts.createTooltip({
             displayColors: true,
-            backgroundColor: '#ffffff',
+            backgroundColor: '#181a1d',
             borderColor: 'rgba(255, 138, 31, 0.24)',
             callbacks: {
               label: (context) => {
@@ -2045,26 +2054,34 @@
 
     document.querySelectorAll('.approve-cert-btn').forEach((button) => {
       button.addEventListener('click', async () => {
+        if (button.disabled) return;
         const card = button.closest('[data-certificate-id]');
+        button.disabled = true;
         try {
           await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'aprovado', card.querySelector('.certificate-feedback').value);
           renderAll(user);
           setActiveSection('certificados');
         } catch (error) {
           showMessage('settingsMessage', error.message, 'error');
+        } finally {
+          button.disabled = false;
         }
       });
     });
 
     document.querySelectorAll('.reject-cert-btn').forEach((button) => {
       button.addEventListener('click', async () => {
+        if (button.disabled) return;
         const card = button.closest('[data-certificate-id]');
+        button.disabled = true;
         try {
           await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'rejeitado', card.querySelector('.certificate-feedback').value);
           renderAll(user);
           setActiveSection('certificados');
         } catch (error) {
           showMessage('settingsMessage', error.message, 'error');
+        } finally {
+          button.disabled = false;
         }
       });
     });

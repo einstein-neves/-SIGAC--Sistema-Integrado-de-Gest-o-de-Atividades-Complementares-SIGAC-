@@ -71,6 +71,31 @@
     box.classList.remove('hidden');
   }
 
+  function renderChartUnavailable(message = 'Grafico indisponivel no momento.') {
+    document.querySelectorAll('.chart-box').forEach((box) => {
+      box.innerHTML = `<div class="chart-fallback">${escapeHtml(message)}</div>`;
+    });
+  }
+
+  function isAuthError(error) {
+    return [401, 403].includes(Number(error?.status || 0));
+  }
+
+  function renderBootstrapError(message) {
+    const dashboard = document.getElementById('dashboard');
+    if (!dashboard) return;
+    dashboard.innerHTML = `
+      <div class="card">
+        <div class="section-title">
+          <h2>Painel temporariamente indisponível</h2>
+          <span class="small">A sessão foi mantida</span>
+        </div>
+        <p>${escapeHtml(message)}</p>
+        <p class="small">Verifique se a API está em execução e recarregue a página.</p>
+      </div>
+    `;
+  }
+
   function badgeClass(status) {
     return {
       aprovado: 'aprovado',
@@ -251,7 +276,10 @@
   }
 
   function renderCharts(data) {
-    if (!window.Chart) return;
+    if (!window.Chart) {
+      renderChartUnavailable('Nao foi possivel carregar a biblioteca de graficos. Recarregue a pagina ou verifique os arquivos do pacote.');
+      return;
+    }
     window.SIGACCharts?.ensureDefaults();
     const statusCtx = document.getElementById('chartStatus').getContext('2d');
     const engagementCtx = document.getElementById('chartEngajamento').getContext('2d');
@@ -266,8 +294,8 @@
         labels: ['Aprovados', 'Rejeitados', 'Em análise'],
         datasets: [{
           data: [data.aprovados, data.rejeitados, data.pendentes],
-          backgroundColor: ['#22c55e', '#ef4444', '#f28c00'],
-          borderColor: '#ffffff',
+          backgroundColor: ['#2dd4a2', '#ff6f86', '#f4bf52'],
+          borderColor: '#181a1d',
           borderWidth: 4,
           spacing: 3,
           borderRadius: 10,
@@ -280,7 +308,7 @@
         plugins: {
           legend: charts.createLegend(),
           tooltip: charts.createTooltip({
-            borderColor: 'rgba(15, 23, 42, 0.12)'
+            borderColor: 'rgba(255, 138, 31, 0.24)'
           })
         }
       })
@@ -293,8 +321,8 @@
         datasets: [{
           label: 'Quantidade',
           data: [data.alunosComEnvio, data.alunosSemEnvio],
-          backgroundColor: ['#1f5fa8', '#f28c00'],
-          borderColor: ['#2f80d0', '#d97706'],
+          backgroundColor: ['#68b8ff', '#ff9b54'],
+          borderColor: ['#9dd2ff', '#ffc38f'],
           borderWidth: 1,
           borderRadius: 10,
           borderSkipped: false,
@@ -316,7 +344,7 @@
           x: charts.createScale({
             grid: { display: false },
             ticks: {
-              color: '#334155',
+              color: '#f4f5f6',
               font: { size: 12, weight: '600' }
             }
           })
@@ -325,7 +353,7 @@
           legend: { display: false },
           tooltip: charts.createTooltip({
             displayColors: false,
-            borderColor: 'rgba(15, 23, 42, 0.12)'
+            borderColor: 'rgba(255, 138, 31, 0.24)'
           })
         }
       })
@@ -622,19 +650,29 @@
     container.querySelectorAll('.evaluation-form').forEach((form) => {
       const feedback = () => form.querySelector('textarea').value;
       form.querySelector('.approve-btn').addEventListener('click', async () => {
+        const button = form.querySelector('.approve-btn');
+        if (button.disabled) return;
+        button.disabled = true;
         try {
           await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'aprovado', feedback());
           renderAll(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
       form.querySelector('.reject-btn').addEventListener('click', async () => {
+        const button = form.querySelector('.reject-btn');
+        if (button.disabled) return;
+        button.disabled = true;
         try {
           await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'rejeitado', feedback());
           renderAll(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
     });
@@ -946,26 +984,34 @@
 
     container.querySelectorAll('.approve-student-cert-btn').forEach((button) => {
       button.addEventListener('click', async () => {
+        if (button.disabled) return;
         const card = button.closest('[data-certificate-id]');
+        button.disabled = true;
         try {
           await SIGACStore.reviewCoordinatorCertificate(user.id, card.dataset.certificateId, 'aprovado', card.querySelector('.student-certificate-feedback').value);
           renderCoordinatorSummary(SIGACStore.getCurrentUser());
           renderStudentCertificates(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
     });
 
     container.querySelectorAll('.reject-student-cert-btn').forEach((button) => {
       button.addEventListener('click', async () => {
+        if (button.disabled) return;
         const card = button.closest('[data-certificate-id]');
+        button.disabled = true;
         try {
           await SIGACStore.reviewCoordinatorCertificate(user.id, card.dataset.certificateId, 'rejeitado', card.querySelector('.student-certificate-feedback').value);
           renderCoordinatorSummary(SIGACStore.getCurrentUser());
           renderStudentCertificates(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
     });
@@ -1294,24 +1340,37 @@
     container.querySelectorAll('.evaluation-form').forEach((form) => {
       const feedback = () => form.querySelector('textarea').value;
       form.querySelector('.approve-btn').addEventListener('click', async () => {
+        const button = form.querySelector('.approve-btn');
+        if (button.disabled) return;
+        button.disabled = true;
         try {
           await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'aprovado', feedback());
           renderCoordinatorSummary(SIGACStore.getCurrentUser());
           renderSubmissions(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
       form.querySelector('.reject-btn').addEventListener('click', async () => {
+        const button = form.querySelector('.reject-btn');
+        if (button.disabled) return;
+        button.disabled = true;
         try {
           await SIGACStore.evaluateSubmission(user.id, form.dataset.submissionId, 'rejeitado', feedback());
           renderCoordinatorSummary(SIGACStore.getCurrentUser());
           renderSubmissions(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
       form.querySelector('.correction-btn').addEventListener('click', async () => {
+        const button = form.querySelector('.correction-btn');
+        if (button.disabled) return;
+        button.disabled = true;
         try {
           const textarea = form.querySelector('textarea');
           if (textarea && !textarea.value.trim()) {
@@ -1322,6 +1381,8 @@
           renderSubmissions(SIGACStore.getCurrentUser());
         } catch (error) {
           alert(error.message);
+        } finally {
+          button.disabled = false;
         }
       });
     });
@@ -1433,8 +1494,13 @@
       renderCoordinatorSection('dashboard', user);
       decorateCoordinatorAccents();
       logPerf('initCoordenador', startedAt);
-    } catch (_) {
-      window.location.href = 'loginsigac.html';
+    } catch (error) {
+      if (isAuthError(error)) {
+        SIGACStore.logout();
+        window.location.href = 'loginsigac.html';
+        return;
+      }
+      renderBootstrapError(error.message || 'Não foi possível carregar o painel do coordenador no momento.');
     }
   }
 

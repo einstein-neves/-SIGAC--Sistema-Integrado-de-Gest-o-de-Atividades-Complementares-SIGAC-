@@ -66,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ...options
       });
     } catch (_) {
-      throw new Error('Não foi possível conectar ao servidor. Abra o SIGAC em localhost:3000 ou mantenha o servidor ligado.');
+      throw new Error(navigator.onLine === false
+        ? 'Você está offline. Conecte-se à internet ou à rede local e tente novamente.'
+        : 'Não foi possível conectar à API do SIGAC. Mantenha o servidor ligado em localhost:3000 e tente novamente.');
     }
 
     let payload = {};
@@ -130,13 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         body: JSON.stringify({ email, senha })
       });
-      saveToken(data.token);
       if (selectedRole && data.user.tipo !== selectedRole) {
-        if (loginRoleSelect) loginRoleSelect.value = data.user.tipo;
-        show(loginMessage, `Login realizado com sucesso. O acesso correto para este usuário é ${data.user.tipo}. Redirecionando...`, 'info');
-      } else {
-        show(loginMessage, `Sucesso! Bem-vindo, ${data.user.nome}.`, 'success');
+        show(loginMessage, 'A função escolhida não corresponde a este usuário.', 'error');
+        return;
       }
+      saveToken(data.token);
+      show(loginMessage, `Sucesso! Bem-vindo, ${data.user.nome}.`, 'success');
       setTimeout(() => {
         window.location.href = routes[data.user.tipo] || 'index.html';
       }, 600);

@@ -300,6 +300,7 @@ async function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions(student_id);
     CREATE INDEX IF NOT EXISTS idx_submissions_activity_id ON submissions(activity_id);
+    CREATE INDEX IF NOT EXISTS idx_submissions_current_status ON submissions(current_status);
 
     CREATE INDEX IF NOT EXISTS idx_submission_versions_submission_id ON submission_versions(submission_id);
     CREATE INDEX IF NOT EXISTS idx_submission_versions_status ON submission_versions(status);
@@ -309,8 +310,13 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
 
     CREATE INDEX IF NOT EXISTS idx_certificates_sender_id ON certificates(sender_id);
+    CREATE INDEX IF NOT EXISTS idx_certificates_sender_status ON certificates(sender_id, admin_status);
     CREATE INDEX IF NOT EXISTS idx_certificates_admin_status ON certificates(admin_status);
     CREATE INDEX IF NOT EXISTS idx_certificates_created_at ON certificates(created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_password_reset_expires_at ON password_reset_tokens(expires_at);
 
     CREATE INDEX IF NOT EXISTS idx_emails_created_at ON emails(created_at);
     CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);

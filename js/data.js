@@ -232,7 +232,10 @@
     try {
       response = await fetch(`${API_BASE}${url}`, { ...options, headers });
     } catch (cause) {
-      throw buildRequestError('Não foi possível conectar ao servidor. Abra o SIGAC em localhost:3000 ou mantenha o servidor ligado.', {
+      const offlineMessage = navigator.onLine === false
+        ? 'Você está offline. O SIGAC manteve a tela aberta, mas os dados serão atualizados quando a conexão voltar.'
+        : 'Não foi possível conectar à API do SIGAC. Mantenha o servidor ligado e tente novamente.';
+      throw buildRequestError(offlineMessage, {
         status: 0,
         url,
         cause
@@ -257,7 +260,7 @@
         clearToken();
         state.currentUser = null;
       }
-      throw buildRequestError(errorMessage || 'Não foi possível concluir a solicitação.', {
+      throw buildRequestError(errorMessage || 'Não foi possível concluir a solicitação. Verifique sua conexão e tente novamente.', {
         status: response.status,
         url,
         payload
@@ -831,7 +834,7 @@
   }
 
   function listActivitiesForCoordinator(coordinatorId) {
-    return clone((state.coordinator.dashboard.activities || []).filter((activity) => activity.createdBy === coordinatorId));
+    return clone(state.coordinator.dashboard.activities || []);
   }
 
   function listSubmissionsForCoordinator() {
@@ -1077,17 +1080,17 @@
       if (!window.Chart || window.Chart.__sigacDefaultsApplied) return;
       Chart.defaults.responsive = true;
       Chart.defaults.maintainAspectRatio = false;
-      Chart.defaults.color = '#334155';
-      Chart.defaults.borderColor = 'rgba(15, 23, 42, 0.12)';
+      Chart.defaults.color = '#d7dbe1';
+      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
       Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
       Chart.defaults.font.weight = '400';
       Chart.defaults.plugins.legend.labels.usePointStyle = true;
       Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
-      Chart.defaults.plugins.legend.labels.color = '#334155';
-      Chart.defaults.plugins.tooltip.backgroundColor = '#ffffff';
-      Chart.defaults.plugins.tooltip.titleColor = '#0f172a';
-      Chart.defaults.plugins.tooltip.bodyColor = '#334155';
-      Chart.defaults.plugins.tooltip.borderColor = 'rgba(15, 23, 42, 0.12)';
+      Chart.defaults.plugins.legend.labels.color = '#f4f5f6';
+      Chart.defaults.plugins.tooltip.backgroundColor = '#181a1d';
+      Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+      Chart.defaults.plugins.tooltip.bodyColor = '#d7dbe1';
+      Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,0.14)';
       Chart.defaults.plugins.tooltip.borderWidth = 1;
       Chart.defaults.plugins.tooltip.padding = 12;
       window.Chart.__sigacDefaultsApplied = true;
@@ -1098,10 +1101,10 @@
     createTooltip(overrides = {}) {
       return mergeChartOptions({
         displayColors: true,
-        backgroundColor: '#ffffff',
-        titleColor: '#0f172a',
-        bodyColor: '#334155',
-        borderColor: 'rgba(15, 23, 42, 0.12)',
+        backgroundColor: '#181a1d',
+        titleColor: '#ffffff',
+        bodyColor: '#dce7d6',
+        borderColor: 'rgba(255,255,255,0.14)',
         borderWidth: 1,
         padding: 12
       }, overrides);
@@ -1110,7 +1113,7 @@
       return mergeChartOptions({
         position: 'bottom',
         labels: {
-          color: '#334155',
+          color: '#f4f5f6',
           boxWidth: 10,
           boxHeight: 10,
           padding: 14,
@@ -1124,11 +1127,11 @@
       return mergeChartOptions({
         border: { display: false },
         grid: {
-          color: 'rgba(15, 23, 42, 0.08)',
+          color: 'rgba(255,255,255,0.07)',
           drawTicks: false
         },
         ticks: {
-          color: '#64748b',
+          color: '#9ca3af',
           padding: 8,
           font: { size: 12, weight: '500' }
         }

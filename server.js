@@ -4,6 +4,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 const { URL } = require('node:url');
+const nodemailer = require('nodemailer');
 const { db, initDatabase, transaction } = require('./db');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -24,15 +25,18 @@ const PUBLIC_ROOT_FILES = new Set([
   'loginsigac.html',
   'reset.html',
   'resetarsenha.html',
+  'manifest.json',
+  'service-worker.js',
   'sigac.css',
   'Logo SIGAC.png',
   'Logo SIGAC-otimizada.png'
 ]);
-const PUBLIC_DIRECTORIES = new Set(['js', 'fonts']);
+const PUBLIC_DIRECTORIES = new Set(['js', 'fonts', 'icons', 'vendor']);
 const PUBLIC_CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/manifest+json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -66,6 +70,7 @@ const textDataUrl = (text) => `data:text/plain;base64,${Buffer.from(String(text 
 const addMs = (ms) => new Date(Date.now() + ms).toISOString();
 const sha256 = (value) => crypto.createHash('sha256').update(String(value)).digest('hex');
 const PERF_LOGS_ENABLED = process.env.SIGAC_PERF_LOGS !== 'false';
+const EMAIL_MODE = String(process.env.EMAIL_MODE || 'mock').toLowerCase();
 
 function startPerf(label) {
   if (!PERF_LOGS_ENABLED) return null;
@@ -234,11 +239,77 @@ async function logAudit(actorId, action, entityType, entityId = '', details = ''
 
 async function queueEmail(to, subject, body, kind = 'geral') {
   if (await getSetting('emailNotificationsEnabled', 'true') !== 'true') return null;
-  const email = { id: uid('mail'), to, subject, body, kind, status: 'simulado (fila local)', createdAt: nowIso() };
+  const email = {
+    id: uid('mail'),
+    to,
+    subject,
+    body,
+    kind,
+    status: getSmtpConfig().enabled ? 'pendente SMTP' : 'simulado (fila local)',
+    createdAt: nowIso()
+  };
   await db.prepare('INSERT INTO emails (id, to_email, subject, body, kind, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .run(email.id, email.to, email.subject, email.body, email.kind, email.status, email.createdAt);
-  await logAudit(null, 'email_enfileirado', 'email', email.id, `${subject} para ${to}`);
+
+  const smtpResult = await trySendSmtpEmail(email);
+  if (smtpResult.status !== email.status) {
+    email.status = smtpResult.status;
+    await db.prepare('UPDATE emails SET status = ? WHERE id = ?').run(email.status, email.id);
+  }
+
+  await logAudit(null, 'email_enfileirado', 'email', email.id, `${subject} para ${to} | ${email.status}`);
   return email;
+}
+
+function getSmtpConfig() {
+  const host = String(process.env.SMTP_HOST || '').trim();
+  const port = Number(process.env.SMTP_PORT || 0);
+  const user = String(process.env.SMTP_USER || '').trim();
+  const pass = String(process.env.SMTP_PASS || '').trim();
+  const from = String(process.env.SMTP_FROM || '').trim();
+  const enabled = EMAIL_MODE === 'smtp' && host && port && from;
+  return {
+    enabled,
+    host,
+    port,
+    secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+    auth: user && pass ? { user, pass } : undefined,
+    from
+  };
+}
+
+async function trySendSmtpEmail(email) {
+  const config = getSmtpConfig();
+  if (!config.enabled) return { status: 'simulado (fila local)' };
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: config.auth
+    });
+
+    await transporter.sendMail({
+      from: config.from,
+      to: email.to,
+      subject: email.subject,
+      text: email.body
+    });
+    return { status: 'enviado via SMTP' };
+  } catch (error) {
+    console.warn('[SIGAC EMAIL] Falha SMTP; e-mail mantido na fila local.', error.message);
+    return { status: `erro SMTP: ${String(error.message || 'falha no envio').slice(0, 120)}` };
+  }
+}
+
+async function notifySuperAdmins(message, type = 'info', subject = '', body = '', exceptUserId = '') {
+  const admins = await db.prepare("SELECT * FROM users WHERE tipo = 'superadmin' AND ativo = 1 ORDER BY nome").all();
+  for (const admin of admins) {
+    if (exceptUserId && admin.id === exceptUserId) continue;
+    await addNotification(admin.id, message, type);
+    if (subject && admin.email) await queueEmail(admin.email, subject, body || message, 'admin-alerta');
+  }
 }
 
 async function getCoordinatorCourseIds(userId) {
@@ -405,7 +476,13 @@ async function listActivitiesForCourse(courseId, options = {}) {
 }
 
 async function listActivitiesForCoordinator(coordinatorId, options = {}) {
-  const rows = await db.prepare('SELECT * FROM activities WHERE created_by = ? ORDER BY created_at DESC').all(coordinatorId);
+  const rows = await db.prepare(`
+    SELECT DISTINCT a.*
+    FROM activities a
+    JOIN coordinator_courses cc ON cc.course_id = a.course_id
+    WHERE cc.user_id = ?
+    ORDER BY a.created_at DESC
+  `).all(coordinatorId);
   return rows.map((row) => serializeActivity(row, options));
 }
 
@@ -1473,7 +1550,9 @@ function parseBody(req) {
     req.on('data', (chunk) => {
       chunks.push(chunk);
       if (Buffer.concat(chunks).length > 15 * 1024 * 1024) {
-        reject(new Error('Corpo da requisição muito grande.'));
+        const error = new Error('Corpo da requisição muito grande.');
+        error.statusCode = 413;
+        reject(error);
       }
     });
     req.on('end', () => {
@@ -1481,7 +1560,9 @@ function parseBody(req) {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
       } catch (error) {
-        reject(new Error('JSON inválido.'));
+        const parseError = new Error('JSON inválido.');
+        parseError.statusCode = 400;
+        reject(parseError);
       }
     });
     req.on('error', reject);
@@ -1617,7 +1698,16 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/courses' && req.method === 'GET') {
       const auth = await requireAuth(req, res, urlObj, ['superadmin', 'coordenador', 'aluno']);
       if (!auth) return;
-      return send(res, 200, { courses: await listCourses() });
+      if (auth.user.tipo === 'superadmin') return send(res, 200, { courses: await listCourses() });
+      const courseIds = auth.user.tipo === 'coordenador'
+        ? await getCoordinatorCourseIds(auth.user.id)
+        : await getStudentCourseIds(auth.user.id);
+      const courses = [];
+      for (const courseId of courseIds) {
+        const course = await getCourseById(courseId);
+        if (course) courses.push(course);
+      }
+      return send(res, 200, { courses });
     }
 
     if (pathname === '/api/opportunities' && req.method === 'GET') {
@@ -1929,7 +2019,7 @@ const server = http.createServer(async (req, res) => {
       await db.prepare('INSERT INTO student_courses (user_id, course_id) VALUES (?, ?) ON CONFLICT DO NOTHING').run(id, courseId);
       const course = await getCourseById(courseId);
       await addNotification(id, `Seu acesso ao SIGAC foi criado e vinculado ao curso ${course?.sigla || courseId}.`, 'info');
-      await queueEmail(email, 'SIGAC - acesso de Aluno criado', `Ol?, ${nome}. Seu acesso ao SIGAC foi criado pelo coordenador ${auth.user.nome}.`, 'boas-vindas');
+      await queueEmail(email, 'SIGAC - acesso de Aluno criado', `Olá, ${nome}. Seu acesso ao SIGAC foi criado pelo coordenador ${auth.user.nome}.`, 'boas-vindas');
       await logAudit(auth.user.id, 'criou_aluno', 'user', id, `${nome} em ${course?.sigla || courseId}`);
       return send(res, 201, { user: await getUserById(id) });
     }
@@ -2258,6 +2348,13 @@ const server = http.createServer(async (req, res) => {
       await addNotification(id, 'Seu acesso ao SIGAC foi criado.', 'info');
       await queueEmail(email, 'SIGAC - acesso criado', `Olá, ${nome}. Seu acesso ao SIGAC foi criado com sucesso.`, 'boas-vindas');
       await logAudit(auth.user.id, 'criou_usuario', 'user', id, `${tipo}: ${nome}`);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} criou o usuário ${nome}.`,
+        'info',
+        'SIGAC - usuário criado',
+        `O usuário ${nome} (${tipo}) foi criado por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { user: await getUserById(id) });
     }
 
@@ -2270,6 +2367,13 @@ const server = http.createServer(async (req, res) => {
       if (!row || row.tipo === 'superadmin') return send(res, 400, { error: 'Usuário inválido.' });
       await db.prepare('UPDATE users SET ativo = ? WHERE id = ?').run(body.ativo ? 1 : 0, userId);
       await logAudit(auth.user.id, body.ativo ? 'ativou_usuario' : 'desativou_usuario', 'user', userId, row.email);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} ${body.ativo ? 'ativou' : 'desativou'} o usuário ${row.nome}.`,
+        'warning',
+        'SIGAC - status de usuário alterado',
+        `O status do usuário ${row.nome} (${row.email}) foi alterado por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { user: await getUserById(userId) });
     }
 
@@ -2290,6 +2394,13 @@ const server = http.createServer(async (req, res) => {
       await db.prepare('INSERT INTO courses (id, sigla, nome, area, turno, horas_meta) VALUES (?, ?, ?, ?, ?, ?)')
         .run(id, sigla, nome, area, turno, horasMeta);
       await logAudit(auth.user.id, 'criou_curso', 'course', id, `${sigla} - ${nome}`);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} criou o curso ${sigla}.`,
+        'info',
+        'SIGAC - curso criado',
+        `O curso ${sigla} - ${nome} foi criado por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { course: await getCourseById(id) });
     }
 
@@ -2305,7 +2416,15 @@ const server = http.createServer(async (req, res) => {
       await db.prepare('UPDATE users SET course_id = ? WHERE id = ?').run(course.id, studentId);
       await db.prepare('INSERT INTO student_courses (user_id, course_id) VALUES (?, ?) ON CONFLICT DO NOTHING').run(studentId, course.id);
       await addNotification(studentId, `Você foi vinculado ao curso ${course.sigla}.`, 'info');
+      await queueEmail(row.email, 'SIGAC - vínculo de curso atualizado', `Você foi vinculado ao curso ${course.sigla} no SIGAC.`, 'vinculo-curso');
       await logAudit(auth.user.id, 'vinculou_aluno_curso', 'student_course', studentId, course.sigla);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} vinculou ${row.nome} ao curso ${course.sigla}.`,
+        'info',
+        'SIGAC - aluno vinculado a curso',
+        `${row.nome} foi vinculado ao curso ${course.sigla} por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { user: await getUserById(studentId) });
     }
 
@@ -2321,7 +2440,15 @@ const server = http.createServer(async (req, res) => {
       const insert = db.prepare('INSERT INTO coordinator_courses (user_id, course_id) VALUES (?, ?)');
       for (const courseId of courseIds) await insert.run(coordinatorId, courseId);
       await addNotification(coordinatorId, 'Seus vínculos de coordenação foram atualizados.', 'info');
+      await queueEmail(row.email, 'SIGAC - vínculos de coordenação atualizados', 'Seus vínculos de coordenação foram atualizados no SIGAC.', 'vinculo-coordenacao');
       await logAudit(auth.user.id, 'atualizou_vinculos_coordenador', 'coordinator_courses', coordinatorId, courseIds.join(', '));
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} atualizou os vínculos do coordenador ${row.nome}.`,
+        'info',
+        'SIGAC - vínculos de coordenador atualizados',
+        `Os vínculos do coordenador ${row.nome} foram atualizados por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { user: await getUserById(coordinatorId) });
     }
 
@@ -2337,6 +2464,13 @@ const server = http.createServer(async (req, res) => {
       await db.prepare('INSERT INTO opportunities (id, titulo, descricao, horas, criado_por, criado_em) VALUES (?, ?, ?, ?, ?, ?)')
         .run(id, titulo, descricao, horas, auth.user.id, nowIso());
       await logAudit(auth.user.id, 'criou_oportunidade', 'opportunity', id, titulo);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} criou a oportunidade ${titulo}.`,
+        'info',
+        'SIGAC - oportunidade criada',
+        `A oportunidade ${titulo} foi criada por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { opportunity: (await listOpportunities()).find((item) => item.id === id) });
     }
 
@@ -2359,6 +2493,13 @@ const server = http.createServer(async (req, res) => {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .run(id, courseId, categoria, limiteMaximo, cargaMinima, exigeCertificado, exigeAprovacao, auth.user.id, nowIso());
       await logAudit(auth.user.id, 'criou_regra', 'activity_rule', id, `${categoria} - ${limiteMaximo}h`);
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} criou uma regra de atividade complementar.`,
+        'info',
+        'SIGAC - regra criada',
+        `Regra criada por ${auth.user.nome}: ${categoria} - limite ${limiteMaximo}h.`,
+        auth.user.id
+      );
       return send(res, 200, { rules: await listActivityRules() });
     }
 
@@ -2378,6 +2519,13 @@ const server = http.createServer(async (req, res) => {
         }
       }
       await logAudit(auth.user.id, 'atualizou_configuracoes', 'settings', 'global', 'Parâmetros do sistema atualizados');
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} atualizou configurações globais do SIGAC.`,
+        'warning',
+        'SIGAC - configurações atualizadas',
+        `Parâmetros globais do SIGAC foram atualizados por ${auth.user.nome}.`,
+        auth.user.id
+      );
       return send(res, 200, { settings: (await getAdminDashboardData()).settings });
     }
 
@@ -2496,7 +2644,7 @@ const server = http.createServer(async (req, res) => {
       if (!auth) return;
       const lines = (await db.prepare('SELECT * FROM emails ORDER BY created_at DESC').all())
         .map((mail) => `${mail.created_at} | ${mail.to_email} | ${mail.subject} | ${mail.status}`);
-      return send(res, 200, lines.join('\n') || 'Nenhum e-mail simulado foi registrado.', {
+      return send(res, 200, lines.join('\n') || 'Nenhum e-mail foi registrado na fila do SIGAC.', {
         'Content-Disposition': 'attachment; filename="sigac-email-log.txt"'
       });
     }
@@ -2514,7 +2662,12 @@ const server = http.createServer(async (req, res) => {
     fs.createReadStream(publicFile.filePath).pipe(res);
   } catch (error) {
     console.error('[SIGAC ERROR]', error);
-    send(res, 500, { error: error.message || 'Erro interno no servidor.' });
+    const status = Number(error.statusCode || error.status || 500);
+    const safeStatus = status >= 400 && status < 500 ? status : 500;
+    const message = safeStatus === 500
+      ? 'Erro interno no servidor. Verifique os logs da API SIGAC.'
+      : error.message || 'Não foi possível concluir a solicitação.';
+    send(res, safeStatus, { error: message });
   }
 });
 

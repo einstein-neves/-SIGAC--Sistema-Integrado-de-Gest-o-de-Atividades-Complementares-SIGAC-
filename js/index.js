@@ -90,6 +90,25 @@
     box.classList.remove('hidden');
   }
 
+  function isAuthError(error) {
+    return [401, 403].includes(Number(error?.status || 0));
+  }
+
+  function renderBootstrapError(message) {
+    const dashboard = document.getElementById('dashboard');
+    if (!dashboard) return;
+    dashboard.innerHTML = `
+      <div class="card">
+        <div class="section-title">
+          <h2>Painel temporariamente indisponível</h2>
+          <span class="small">A sessão foi mantida</span>
+        </div>
+        <p>${escapeHtml(message)}</p>
+        <p class="small">Verifique se a API está em execução e recarregue a página.</p>
+      </div>
+    `;
+  }
+
   function badgeClass(status) {
     return {
       aprovado: 'aprovado',
@@ -1097,8 +1116,13 @@
       renderSection('dashboard', user);
       decorateStudentAccents();
       SIGACStore.markNotificationsAsRead().catch(() => {});
-    } catch (_) {
-      window.location.href = 'loginsigac.html';
+    } catch (error) {
+      if (isAuthError(error)) {
+        SIGACStore.logout();
+        window.location.href = 'loginsigac.html';
+        return;
+      }
+      renderBootstrapError(error.message || 'Não foi possível carregar o painel do aluno no momento.');
     }
   }
 

@@ -18,7 +18,7 @@
       script.src = src;
       script.async = true;
       script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
-      script.onerror = () => reject(new Error(`Falha ao carregar ${src}`));
+      script.onerror = () => reject(new Error('Nao foi possivel carregar as bibliotecas externas do OCR. Verifique a conexao com a internet ou faca a validacao manual do certificado.'));
       document.head.appendChild(script);
     });
   }
@@ -28,6 +28,9 @@
     await ensureScript(TESSERACT_CDN);
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     if (pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_CDN;
+    if (!pdfjsLib || !window.Tesseract) {
+      throw new Error('Nao foi possivel inicializar as bibliotecas externas do OCR. Continue o envio manualmente e use os dados preenchidos no formulario como fonte final.');
+    }
     return { pdfjsLib, Tesseract: window.Tesseract };
   }
 
@@ -145,26 +148,26 @@
       .filter((field) => !uniqueFoundFields.some((foundField) => normalizeFieldKey(foundField) === normalizeFieldKey(field)));
 
     if (uniqueFoundFields.length <= 1 && uniqueMissingFields.length >= 4) {
-      return 'Não foi possível validar automaticamente este certificado. O texto extraído não contém informações suficientes para confirmar os principais dados do documento. Recomenda-se revisão manual.';
+      return 'OCR de apoio concluído: o texto extraído não trouxe informações suficientes para uma pré-análise confiável. Revise o certificado manualmente; a decisão final deve considerar os dados preenchidos no formulário.';
     }
 
     const parts = [];
     if (uniqueFoundFields.length) {
       const intro = uniqueMissingFields.length
-        ? 'Pré-análise concluída com pendências.'
-        : 'Pré-análise concluída.';
-      parts.push(`${intro} O OCR identificou ${joinHumanList(uniqueFoundFields)}.`);
+        ? 'OCR de apoio concluído com pendências.'
+        : 'OCR de apoio concluído.';
+      parts.push(`${intro} Foram identificados ${joinHumanList(uniqueFoundFields)}.`);
     } else {
-      parts.push('Não foi possível validar automaticamente este certificado. O texto extraído não contém informações suficientes para confirmar os principais dados do documento.');
+      parts.push('OCR de apoio concluído sem dados suficientes para pré-análise automática.');
     }
 
     if (uniqueMissingFields.length) {
-      parts.push(`Não foi possível identificar: ${joinHumanList(uniqueMissingFields)}.`);
-      parts.push('Recomenda-se revisão manual antes da decisão final.');
+      parts.push(`Campos que exigem conferência manual: ${joinHumanList(uniqueMissingFields)}.`);
     }
 
     if (detectedHours > 0) parts.push(`Carga horária detectada: ${detectedHours}h.`);
     if (detectedCourseName) parts.push(`Curso/evento detectado: ${detectedCourseName}.`);
+    parts.push('O OCR é apenas apoio e não substitui a validação humana nem os dados obrigatórios informados no formulário.');
 
     return parts.join(' ');
   }
@@ -172,11 +175,11 @@
   function buildOcrReason(ocrStatus, missingFields) {
     const uniqueMissingFields = dedupeOcrFields(missingFields);
 
-    let reason = 'A pré-análise identificou informações parciais. A decisão final deve ser confirmada manualmente.';
+    let reason = 'O OCR identificou informações parciais. Confirme manualmente antes da decisão final.';
     if (ocrStatus === 'aprovado_automatico') {
-      reason = 'Os principais dados do certificado foram identificados com boa consistência.';
+      reason = 'Os principais dados foram encontrados com boa consistência, mas a validação humana continua obrigatória.';
     } else if (ocrStatus === 'rejeitado_automatico') {
-      reason = 'O texto extraído não contém informações suficientes para validar automaticamente o certificado.';
+      reason = 'O texto extraído não contém informações suficientes para apoiar a aprovação automática.';
     }
 
     if (uniqueMissingFields.length) {
