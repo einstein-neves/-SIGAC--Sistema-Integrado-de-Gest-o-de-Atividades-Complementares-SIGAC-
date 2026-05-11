@@ -32,7 +32,7 @@
 
   function setUserIdentity(user, roleLabel) {
     document.getElementById('userName').textContent = user.nome;
-    document.getElementById('userRole').textContent = roleLabel;
+    document.getElementById('userRole').textContent = user.matricula ? `${roleLabel} | Matrícula ${user.matricula}` : roleLabel;
     const initial = document.getElementById('userInitial');
     if (initial) {
       const firstLetter = String(user.nome || '?').trim().charAt(0).toUpperCase() || '?';
@@ -94,6 +94,7 @@
     return [401, 403].includes(Number(error?.status || 0));
   }
 
+  
   function renderBootstrapError(message) {
     const dashboard = document.getElementById('dashboard');
     if (!dashboard) return;
@@ -107,7 +108,7 @@
         <p class="small">Verifique se a API está em execução e recarregue a página.</p>
       </div>
     `;
-  }
+  } 
 
   function badgeClass(status) {
     return {
@@ -364,7 +365,7 @@
 
     setUserIdentity(user, 'Aluno');
     document.getElementById('courseInfo').innerHTML = course
-      ? `<strong>${escapeHtml(course.sigla)}</strong> - ${escapeHtml(course.nome)} | Turno: ${escapeHtml(course.turno)}`
+      ? `<strong>${escapeHtml(course.sigla)}</strong> - ${escapeHtml(course.nome)} | Turno: ${escapeHtml(course.turno)} | Matrícula: <strong>${escapeHtml(user.matricula || 'Não gerada')}</strong>`
       : 'Você ainda não está vinculado a um curso.';
 
     document.getElementById('dashboardLead').textContent = remainingHours
@@ -383,6 +384,10 @@
       <div class="dashboard-kpi-card accent-card accent-card--warning">
         <span>Restantes</span>
         <strong>${remainingHours}h</strong>
+      </div>
+      <div class="dashboard-kpi-card accent-card accent-card--info">
+        <span>Matrícula</span>
+        <strong>${escapeHtml(user.matricula || 'Não gerada')}</strong>
       </div>
     `;
 

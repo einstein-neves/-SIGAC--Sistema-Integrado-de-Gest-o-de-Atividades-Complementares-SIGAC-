@@ -1,0 +1,26 @@
+/* Cores globais de texto internas */
+.card *,
+.item *,
+.modal-panel *,
+.topbar *,
+.panel-section * {
+  border-color: inherit;
+}
+
+.card a,
+.item a,
+.panel-section a,
+.card-link,
+.admin-user-link,
+.field-heading a {
+  color: var(--primary);
+}
+
+.card a:hover,
+.item a:hover,
+.panel-section a:hover,
+.card-link:hover,
+.admin-user-link:hover,
+.field-heading a:hover {
+  color: var(--primary-hover);
+}

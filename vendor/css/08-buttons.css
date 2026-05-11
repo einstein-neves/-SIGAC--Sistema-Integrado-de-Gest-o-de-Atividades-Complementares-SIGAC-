@@ -1,0 +1,183 @@
+/* Botões */
+button,
+.button,
+.btn-primary,
+.btn-login,
+.admin-export-button,
+.text-button,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: var(--primary);
+  color: var(--text-on-orange);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease;
+}
+
+button:hover,
+.button:hover,
+.btn-primary:hover,
+.btn-login:hover,
+.admin-export-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: var(--text-on-orange);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+button:focus-visible,
+.button:focus-visible,
+.btn-primary:focus-visible,
+.btn-login:focus-visible,
+.header-button:focus-visible,
+.text-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+button:disabled,
+.button:disabled,
+button[disabled],
+textarea[disabled],
+input[disabled],
+select[disabled] {
+  opacity: .62;
+  cursor: not-allowed;
+  transform: none;
+}
+
+button.secondary,
+.button.secondary,
+.header-button,
+.text-button,
+.icon-button,
+.activity-status-tabs button,
+.filters-bar button.secondary,
+.opportunity-unenroll,
+button.light,
+.header-button.light {
+  background: var(--surface-1);
+  color: var(--secondary);
+  border-color: var(--border);
+  box-shadow: var(--shadow-xs);
+}
+
+button.secondary:hover,
+.button.secondary:hover,
+.header-button:hover,
+.text-button:hover,
+.icon-button:hover,
+.activity-status-tabs button:hover,
+button.light:hover,
+.header-button.light:hover {
+  background: var(--secondary-soft);
+  color: var(--secondary-hover);
+  border-color: var(--secondary);
+}
+
+.activity-status-tabs button.active,
+button.active,
+.button.active {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: var(--white);
+}
+
+button.success,
+.button.success,
+.approve-btn,
+.approve-cert-btn,
+.approve-student-cert-btn {
+  background: var(--success);
+  color: var(--white);
+  border-color: var(--success);
+}
+
+button.success:hover,
+.button.success:hover,
+.approve-btn:hover,
+.approve-cert-btn:hover,
+.approve-student-cert-btn:hover {
+  background: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+button.warning,
+.button.warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+
+button.warning:hover,
+.button.warning:hover {
+  background: var(--warning-border);
+  color: var(--text-on-status-light);
+  border-color: var(--warning-border);
+}
+
+button.danger,
+.button.danger,
+.reject-btn,
+.reject-cert-btn,
+.reject-student-cert-btn,
+.delete-user {
+  background: var(--danger);
+  color: var(--white);
+  border-color: var(--danger);
+}
+
+button.danger:hover,
+.button.danger:hover,
+.reject-btn:hover,
+.reject-cert-btn:hover,
+.reject-student-cert-btn:hover,
+.delete-user:hover {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+
+.btn-login {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+.header-button {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.icon-button {
+  width: 40px;
+  padding-inline: 0;
+}
+
+.text-button {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  box-shadow: none;
+}
+
+.text-button:hover {
+  background: transparent;
+  color: var(--primary-hover);
+  box-shadow: none;
+  text-decoration: underline;
+}

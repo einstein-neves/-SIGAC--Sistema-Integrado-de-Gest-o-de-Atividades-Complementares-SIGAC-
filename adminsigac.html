@@ -9,22 +9,27 @@
   <meta name="theme-color" content="#f97316">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="SIGAC">
-  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
+  <script>(function(){try{document.documentElement.dataset.theme=localStorage.getItem('sigac-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}})();</script>
+  <link rel="stylesheet" href="sigac.css?v=matricula-sem-token-2026-05-08">
   <script src="vendor/chart.umd.min.js"></script>
 </head>
 <body>
 <header class="console-header">
-  <div class="console-brand">
+  <a class="console-brand console-brand-home" href="#dashboard" data-section-jump="dashboard" aria-label="Voltar ao início">
     <img src="Logo SIGAC.png" alt="Logo SIGAC">
     <span class="brand-slash">/</span>
     <strong>SIGAC</strong>
-  </div>
+  </a>
   <div class="console-context" aria-label="Contexto da tela">
     <span>Painel Administrativo</span>
     <strong>Super Administrador</strong>
   </div>
   <div class="console-actions">
     <span class="status-pill"><span></span>Online</span>
+    <button type="button" class="header-button theme-toggle" id="themeToggle" aria-pressed="false" title="Alternar modo claro/escuro">
+      <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+      <span class="theme-toggle-label">Modo escuro</span>
+    </button>
     <button type="button" class="header-button" data-section-jump="notificacoes" aria-label="Abrir notificações">
       <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8A2.5 2.5 0 0 0 12 22Zm7-5-2-2v-4a5 5 0 0 0-4-4.9V4h-2v2.1A5 5 0 0 0 7 11v4l-2 2v1h14v-1Z"/></svg>
       <span>Avisos</span>
@@ -60,7 +65,6 @@
         <strong id="userName">Carregando...</strong>
         <span id="userRole">Administração Global</span>
       </span>
-      <span class="org-chevron" aria-hidden="true"></span>
     </div>
 
     <nav class="menu">
@@ -168,7 +172,7 @@
           <form id="userForm">
             <div class="field"><label for="userNameInput">Nome</label><input id="userNameInput" type="text" required></div>
             <div class="field"><label for="userEmailInput">E-mail</label><input id="userEmailInput" type="email" required></div>
-            <div class="field"><label for="userPasswordInput">Senha</label><input id="userPasswordInput" type="text" required></div>
+            <div class="field"><label for="userPasswordInput">Senha temporária</label><input id="userPasswordInput" type="text" placeholder="Deixe vazio para gerar automaticamente"><span class="small">O usuário será obrigado a trocar a senha no primeiro acesso.</span></div>
             <div class="field"><label for="userTypeInput">Função</label><select id="userTypeInput" required><option value="aluno">Aluno</option><option value="coordenador">Coordenador</option></select></div>
             <div class="field"><label for="userStatusInput">Status inicial</label><select id="userStatusInput"><option value="1">Ativo</option><option value="0">Inativo</option></select></div>
             <div class="field" id="userCoursesField">
@@ -198,7 +202,7 @@
           <div class="table-wrap admin-users-table-wrap">
             <table class="admin-users-table">
               <thead>
-                <tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Vínculo</th><th>Status</th><th>Último acesso</th><th>Ação</th></tr>
+                <tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th>Perfil</th><th>Vínculo</th><th>Status</th><th>Último acesso</th><th>Ação</th></tr>
               </thead>
               <tbody id="usersTableBody"></tbody>
             </table>
@@ -513,9 +517,10 @@
   </main>
 </div>
 
-<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/theme.js?v=matricula-sem-token-2026-05-08"></script>
+<script src="js/data.js?v=matricula-sem-token-2026-05-08"></script>
 <script src="js/ocr.js"></script>
-<script src="js/admin.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/admin.js?v=matricula-sem-token-2026-05-08"></script>
 <script src="js/custom-select.js"></script>
 <script src="js/pwa.js"></script>
 </body>

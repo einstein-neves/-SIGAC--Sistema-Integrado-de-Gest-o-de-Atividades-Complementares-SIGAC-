@@ -1,8 +1,9 @@
-const CACHE_VERSION = 'sigac-entrega-1-v3';
+
+const CACHE_VERSION = 'sigac-matricula-sem-token-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 // Cache estatico seguro: somente arquivos publicos de interface, assets,
-// manifest, icones, fontes e bibliotecas locais. Dados privados ficam fora.
+// manifest, icones e bibliotecas locais. Dados privados ficam fora.
 const STATIC_ASSETS = [
   '/',
   '/loginsigac.html',
@@ -19,15 +20,14 @@ const STATIC_ASSETS = [
   '/icons/sigac-icon-512.png',
   '/js/data.js',
   '/js/login.js',
+  '/js/theme.js',
   '/js/index.js',
   '/js/admin.js',
   '/js/coordenador.js',
   '/js/ocr.js',
   '/js/reset.js',
   '/js/custom-select.js',
-  '/vendor/chart.umd.min.js',
-  '/fonts/Inter/Inter-Variable.ttf',
-  '/fonts/Inter/Inter-Italic-Variable.ttf'
+  '/vendor/chart.umd.min.js'
 ];
 
 const OFFLINE_API_RESPONSE = {

@@ -1,0 +1,150 @@
+/* Aluno */
+.activity-card,
+.opportunity-card,
+.certificate-history-item,
+.dashboard-action-card,
+.notification-item {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-card-top,
+.opportunity-card-head,
+.certificate-history-top {
+  align-items: flex-start;
+}
+
+.activity-card-heading,
+.activity-card-main,
+.dashboard-action-copy,
+.notification-copy,
+.submission-copy,
+.profile-main {
+  min-width: 0;
+}
+
+.activity-meta-card,
+.certificate-meta-card,
+.coordinator-student-meta-card,
+.coordinator-certificate-meta-card,
+.coordinator-submission-meta-card,
+.coordinator-opportunity-meta-card,
+.coordinator-rule-meta-card,
+.admin-report-metric-card,
+.admin-submission-priority,
+.admin-certificate-priority,
+.admin-link-step,
+.summary-stat,
+.certificate-summary-card,
+.opportunity-summary-card,
+.dashboard-kpi-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.activity-meta-card span,
+.certificate-meta-card span,
+.coordinator-student-meta-card span,
+.coordinator-certificate-meta-card span,
+.coordinator-submission-meta-card span,
+.coordinator-opportunity-meta-card span,
+.coordinator-rule-meta-card span,
+.admin-report-metric-card span,
+.summary-stat span,
+.certificate-summary-card span,
+.opportunity-summary-card span,
+.dashboard-kpi-card span,
+.admin-submission-priority span,
+.admin-certificate-priority span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.activity-meta-card strong,
+.certificate-meta-card strong,
+.coordinator-student-meta-card strong,
+.coordinator-certificate-meta-card strong,
+.coordinator-submission-meta-card strong,
+.coordinator-opportunity-meta-card strong,
+.coordinator-rule-meta-card strong,
+.admin-report-metric-card strong,
+.admin-submission-priority strong,
+.admin-certificate-priority strong {
+  color: var(--heading);
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.certificate-dropzone {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 180px;
+  padding: 22px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--muted);
+  text-align: center;
+}
+
+.certificate-dropzone-icon,
+.activity-empty-icon,
+.opportunity-empty-icon,
+.certificate-empty-icon,
+.coordinator-student-empty-icon,
+.coordinator-certificate-empty-icon,
+.coordinator-rule-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.certificate-file-name {
+  color: var(--muted-2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-empty-state,
+.opportunity-empty,
+.certificate-empty-state,
+.admin-courses-empty,
+.admin-rules-empty,
+.admin-opportunities-empty,
+.admin-certificates-empty,
+.admin-submissions-empty,
+.admin-reports-empty,
+.admin-notifications-empty,
+.coordinator-student-empty,
+.coordinator-certificate-empty,
+.coordinator-rule-empty,
+.coordinator-submission-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  color: var(--muted);
+  text-align: center;
+}

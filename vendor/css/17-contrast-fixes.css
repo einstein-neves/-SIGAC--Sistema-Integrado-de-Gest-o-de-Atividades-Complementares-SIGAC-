@@ -1,0 +1,53 @@
+/* Correções específicas de contraste */
+.header-button.light,
+.console-header .header-button.light {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-orange);
+}
+
+.header-button.light:hover,
+.console-header .header-button.light:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: var(--text-on-orange);
+}
+
+.card.danger,
+.metric-card.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.card.attention,
+.metric-card.attention {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+
+.card.danger h3,
+.metric-card.danger h3,
+.card.attention h3,
+.metric-card.attention h3 {
+  color: inherit;
+}
+
+.status-pill {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
+}
+
+.console-header .status-pill {
+  background: var(--blue-100);
+  color: var(--blue-800);
+}
+
+html[data-theme="dark"] .console-header .status-pill,
+body.dark .console-header .status-pill,
+body.dark-mode .console-header .status-pill {
+  background: var(--info-bg);
+  color: var(--info-text);
+}

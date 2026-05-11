@@ -1,0 +1,148 @@
+/* Notificações, auditoria e configurações */
+.notification-history-card,
+.audit-log-card,
+.timeline-item {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 14px 14px 14px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+}
+
+.notification-history-dot,
+.audit-log-dot,
+.notification-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.audit-log-rail,
+.notification-history-line {
+  background: var(--border);
+}
+
+.tone-critical,
+.tone-error,
+.settings-pill.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.tone-attention,
+.tone-warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+
+.tone-success {
+  background: var(--success-soft);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.tone-info {
+  background: var(--info-soft);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+.settings-grid,
+.notification-composer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+  gap: 16px;
+}
+
+.settings-callout,
+.notification-preview {
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.toggle-card,
+.coordinator-rule-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  cursor: pointer;
+}
+
+.toggle-card input,
+.coordinator-rule-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-copy strong,
+.coordinator-rule-toggle strong {
+  color: var(--heading);
+  font-size: 14px;
+}
+
+.toggle-copy small,
+.coordinator-rule-toggle small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--muted-3);
+  transition: transform .18s ease, background .18s ease;
+}
+
+.toggle-card input:checked ~ .toggle-switch,
+.coordinator-rule-toggle input:checked ~ .toggle-switch {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.toggle-card input:checked ~ .toggle-switch::after,
+.coordinator-rule-toggle input:checked ~ .toggle-switch::after {
+  transform: translateX(20px);
+  background: var(--primary);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+
+.toggle-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}

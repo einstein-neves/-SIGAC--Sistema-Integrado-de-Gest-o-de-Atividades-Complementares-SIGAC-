@@ -1,3 +1,4 @@
+
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -43,3 +44,4 @@ if ($isLocalDb) {
 }
 
 & $node server.js
+*/

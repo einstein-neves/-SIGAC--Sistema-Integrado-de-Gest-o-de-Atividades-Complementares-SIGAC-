@@ -1,0 +1,400 @@
+/* Coordenador/Admin específicos */
+.coordinator-panel-heading,
+.admin-courses-title,
+.admin-link-card-head,
+.admin-user-form-note,
+.admin-certificate-status-row,
+.admin-risk-student-meta,
+.admin-link-history-foot,
+.notification-history-meta,
+.audit-log-meta,
+.stack-meta,
+.activity-support,
+.activity-support-row,
+.opportunity-meta,
+.admin-opportunity-category,
+.admin-opportunity-inscritos,
+.admin-user-email,
+.admin-user-role,
+.admin-link-history-date,
+.admin-link-history-course,
+.admin-report-category,
+.risk-meta,
+.submission-stat,
+.submission-card-foot,
+.submission-person,
+.ocr-compare {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.coordinator-panel-heading {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.coordinator-panel-heading h2,
+.admin-courses-title h2,
+.admin-users-toolbar h2,
+.admin-link-card-head h2,
+.admin-report-catalog-card h3 {
+  margin-bottom: 0;
+}
+
+.admin-user-actions,
+.opportunity-card-actions,
+.activity-actions,
+.coordinator-certificate-actions,
+.coordinator-submission-actions,
+.admin-certificate-actions,
+.dashboard-feature-actions,
+.certificate-history-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-user-action-button,
+.admin-user-delete-button {
+  min-height: 34px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.admin-user-name,
+.admin-link-history-identity strong,
+.submission-title,
+.risk-head strong,
+.stack-title,
+.notification-history-head strong,
+.audit-log-head strong {
+  color: var(--heading);
+  font-weight: 850;
+}
+
+.submission-card,
+.submission-showcase,
+.pendingSubmissionsList,
+.admin-submissions-support,
+.admin-certificates-toolbar,
+.admin-opportunities-toolbar,
+.admin-users-toolbar,
+.admin-users-filters,
+.admin-rules-filters,
+.admin-course-search,
+.admin-opportunity-search,
+.coordinator-student-filters,
+.coordinator-certificates-toolbar,
+.coordinator-activities-filters,
+.coordinator-opportunity-filters,
+.coordinator-submission-filters,
+.filters-bar,
+.dashboard-toolbar,
+.audit-toolbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+}
+
+.admin-link-flow-card,
+.coordinator-link-flow,
+.student-link-flow {
+  background: var(--info-soft);
+  border-color: var(--info-border);
+}
+
+.admin-link-step,
+.coordinator-rule-step {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.coordinator-rule-step-index {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: var(--white);
+  font-weight: 900;
+}
+
+.admin-export-button {
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+  padding: 14px;
+  border-radius: var(--radius);
+}
+
+.admin-export-button strong {
+  color: currentColor;
+}
+
+.admin-export-button span {
+  color: var(--white-alpha-84);
+  font-size: 12px;
+}
+
+/* OCR/Admin: cores visuais de aprovação e rejeição dos certificados */
+.admin-certificate-card.is-approved {
+  background: var(--success-soft) !important;
+  border-color: var(--success-border) !important;
+}
+
+.admin-certificate-card.is-approved::before,
+.admin-certificate-card.ocr-approved::before {
+  background: var(--success) !important;
+}
+
+.admin-certificate-card.is-rejected {
+  background: var(--danger-soft) !important;
+  border-color: var(--danger-border) !important;
+}
+
+.admin-certificate-card.is-rejected::before,
+.admin-certificate-card.ocr-rejected::before {
+  background: var(--danger) !important;
+}
+
+.admin-certificate-card.ocr-approved .admin-certificate-status-row {
+  background: var(--success-soft);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.admin-certificate-card.ocr-rejected .admin-certificate-status-row {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.admin-certificate-card.ocr-manual .admin-certificate-status-row {
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.ocr-compare > div {
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.ocr-compare > div:first-child {
+  background: var(--surface-2);
+  color: var(--heading);
+}
+
+.ocr-compare > div.ocr-match {
+  background: var(--success-soft);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+}
+
+.ocr-compare > div.ocr-mismatch,
+.ocr-compare > div.ocr-missing {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+}
+
+.admin-certificate-card.is-approved,
+.admin-certificate-card.is-rejected,
+.admin-certificate-card.ocr-approved,
+.admin-certificate-card.ocr-rejected,
+.admin-certificate-card.ocr-manual {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-certificate-card.is-approved::before,
+.admin-certificate-card.is-rejected::before,
+.admin-certificate-card.ocr-approved::before,
+.admin-certificate-card.ocr-rejected::before,
+.admin-certificate-card.ocr-manual::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+.admin-certificate-card.ocr-manual::before {
+  background: var(--warning) !important;
+}
+
+
+
+/* =========================================================
+   OCR - painel visual de decisão e feedback rápido
+   Cole no final de vendor/css/13-page-coordenador-admin.css
+   ========================================================= */
+
+.ocr-decision-panel {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.ocr-decision-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ocr-decision-head strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.ocr-decision-head span {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.ocr-decision-panel p {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.ocr-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ocr-decision-grid > div {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.ocr-decision-grid strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.ocr-decision-grid ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.ocr-decision-grid li {
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.ocr-decision-panel.is-approved {
+  border-color: var(--success-border);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.ocr-decision-panel.is-rejected {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.ocr-decision-panel.is-manual {
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.ocr-decision-panel.is-info {
+  border-color: var(--info-border);
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.ocr-feedback-quick-actions {
+  margin: 8px 0 10px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+}
+
+.ocr-feedback-quick-actions strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.ocr-feedback-quick-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedback-template-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.feedback-template-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-xs);
+}
+
+.feedback-template-btn.success {
+  border-color: var(--success-border);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.feedback-template-btn.warning {
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.feedback-template-btn.danger {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.admin-certificate-card-hiding {
+  opacity: 0;
+  transform: scale(.985);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+@media (max-width: 780px) {
+  .ocr-decision-grid {
+    grid-template-columns: 1fr;
+  }
+}

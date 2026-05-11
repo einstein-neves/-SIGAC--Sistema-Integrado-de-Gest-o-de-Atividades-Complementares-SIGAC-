@@ -125,6 +125,10 @@ async function initDatabase() {
       tipo TEXT NOT NULL CHECK (tipo IN ('superadmin', 'coordenador', 'aluno')),
       ativo INTEGER NOT NULL DEFAULT 1,
       course_id TEXT REFERENCES courses(id),
+      matricula TEXT UNIQUE,
+      must_change_password INTEGER NOT NULL DEFAULT 0,
+      password_updated_at TEXT,
+      temporary_password_issued_at TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -276,6 +280,17 @@ async function initDatabase() {
 
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS expires_at TEXT;
 
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS matricula TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_updated_at TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS temporary_password_issued_at TEXT;
+
+    UPDATE users
+    SET matricula = 'SIGAC-' || EXTRACT(YEAR FROM NOW())::INT || '-' || UPPER(SUBSTRING(MD5(id), 1, 8))
+    WHERE matricula IS NULL OR matricula = '';
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_matricula_unique ON users(matricula) WHERE matricula IS NOT NULL AND matricula <> '';
+
     ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS categoria TEXT NOT NULL DEFAULT '';
     ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS horas_declaradas INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE submission_versions ADD COLUMN IF NOT EXISTS descricao TEXT NOT NULL DEFAULT '';
@@ -348,3 +363,5 @@ module.exports = {
   pool,
   transaction
 };
+
+

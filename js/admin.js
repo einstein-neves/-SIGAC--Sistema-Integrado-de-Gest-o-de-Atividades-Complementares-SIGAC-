@@ -95,7 +95,9 @@
 
   function isAuthError(error) {
     return [401, 403].includes(Number(error?.status || 0));
+
   }
+
 
   function renderBootstrapError(message) {
     const dashboard = document.getElementById('dashboard');
@@ -735,6 +737,214 @@
     return certificate.ocrReason || 'Aguardando pr\u00e9-an\u00e1lise do OCR.';
   }
 
+  function buildOcrDecisionReport(certificate) {
+    const ocrStatus = certificate.ocrStatus || 'nao_processado';
+    const missingFields = formatOcrFieldList(certificate.missingFields);
+    const foundFields = formatOcrFieldList(certificate.foundFields);
+
+    const expectedName = certificate.sender?.nome || '';
+    const detectedName = certificate.detectedName || '';
+    const detectedCourse = certificate.detectedCourseName || certificate.detectedTitle || '';
+    const detectedHours = Number(certificate.detectedHours || 0);
+    const declaredHours = Number(certificate.declaredHours || 0);
+
+    const issues = [];
+    const positives = [];
+
+    if (ocrStatus === 'nao_processado') {
+      return {
+        tone: 'info',
+        title: 'OCR ainda não processado',
+        summary: 'Clique em “Processar OCR” para iniciar a pré-análise automática do certificado.',
+        issues: [],
+        positives: [],
+        missingFields,
+        foundFields
+      };
+    }
+
+    if (foundFields.length) {
+      positives.push(`Campos identificados: ${foundFields.join(', ')}.`);
+    }
+
+    if (detectedCourse) positives.push(`Curso/evento detectado: ${detectedCourse}.`);
+    if (detectedHours > 0) positives.push(`Carga horária detectada: ${detectedHours}h.`);
+    if (certificate.detectedDate) positives.push(`Data detectada: ${certificate.detectedDate}.`);
+    if (certificate.detectedInstitution) positives.push(`Instituição detectada: ${certificate.detectedInstitution}.`);
+    if (certificate.detectedCnpj) positives.push(`CNPJ detectado: ${certificate.detectedCnpj}.`);
+    if (certificate.detectedCode) positives.push(`Código do certificado detectado: ${certificate.detectedCode}.`);
+
+    if (missingFields.length) {
+      issues.push(`Campos faltando ou não confirmados: ${missingFields.join(', ')}.`);
+    }
+
+    if (expectedName && !detectedName) {
+      issues.push(`Nome do aluno não confirmado pelo OCR. Esperado no sistema: ${expectedName}.`);
+    }
+
+    if (declaredHours > 0 && detectedHours > 0 && declaredHours !== detectedHours) {
+      issues.push(`Carga horária divergente: o aluno informou ${declaredHours}h, mas o OCR detectou ${detectedHours}h.`);
+    }
+
+    if (!detectedCourse) issues.push('Nome do curso/evento não identificado com segurança.');
+    if (!detectedHours) issues.push('Carga horária não identificada.');
+    if (!certificate.detectedDate) issues.push('Data do certificado não identificada.');
+    if (!certificate.detectedInstitution && !certificate.detectedCnpj) issues.push('Instituição ou CNPJ não identificado.');
+
+    if (ocrStatus === 'aprovado_automatico' && !issues.length) {
+      return {
+        tone: 'approved',
+        title: 'OCR aprovado',
+        summary: 'O OCR encontrou os principais dados necessários para apoiar a aprovação.',
+        issues,
+        positives: positives.length ? positives : ['Os dados principais foram encontrados com boa consistência.'],
+        missingFields,
+        foundFields
+      };
+    }
+
+    if (ocrStatus === 'rejeitado_automatico') {
+      return {
+        tone: 'rejected',
+        title: 'OCR rejeitado',
+        summary: 'O OCR não encontrou informações suficientes ou encontrou divergências importantes.',
+        issues: issues.length ? issues : ['Texto insuficiente para validar o certificado automaticamente.'],
+        positives,
+        missingFields,
+        foundFields
+      };
+    }
+
+    return {
+      tone: issues.length ? 'manual' : 'approved',
+      title: issues.length ? 'OCR em revisão manual' : 'OCR aprovado para conferência',
+      summary: issues.length
+        ? 'O OCR encontrou alguns dados, mas ainda existem pontos que precisam de conferência do administrador.'
+        : 'O OCR encontrou os dados principais, mas a validação final continua sendo do administrador.',
+      issues,
+      positives,
+      missingFields,
+      foundFields
+    };
+  }
+
+  function renderOcrDecisionPanel(certificate) {
+    const report = buildOcrDecisionReport(certificate);
+
+    const positivesHtml = report.positives.length
+      ? `<ul>${report.positives.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      : '<p>Nenhum dado positivo encontrado pelo OCR.</p>';
+
+    const issuesHtml = report.issues.length
+      ? `<ul>${report.issues.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+      : '<p>Nenhuma pendência crítica identificada pelo OCR.</p>';
+
+    return `
+      <div class="ocr-decision-panel is-${report.tone}">
+        <div class="ocr-decision-head">
+          <strong>${escapeHtml(report.title)}</strong>
+          <span>${escapeHtml(statusLabel(certificate.ocrStatus))}</span>
+        </div>
+        <p>${escapeHtml(report.summary)}</p>
+
+        <div class="ocr-decision-grid">
+          <div>
+            <strong>O que o OCR encontrou</strong>
+            ${positivesHtml}
+          </div>
+          <div>
+            <strong>O que falta corrigir/conferir</strong>
+            ${issuesHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function getDefaultAdminFeedback(certificate, decision) {
+    const report = buildOcrDecisionReport(certificate);
+
+    if (decision === 'aprovado') {
+      return 'Certificado aprovado. Os dados principais foram conferidos e a carga horária foi considerada válida para registro no SIGAC.';
+    }
+
+    const issues = report.issues.length
+      ? report.issues.join(' ')
+      : 'O certificado não possui informações suficientes para validação.';
+
+    return `Certificado rejeitado. ${issues} Por favor, envie um novo comprovante legível contendo nome do participante, curso/evento, carga horária, data e instituição/CNPJ.`;
+  }
+
+  function getFeedbackTemplates(certificate) {
+    const report = buildOcrDecisionReport(certificate);
+    const missing = report.missingFields || [];
+
+    const templates = [
+      {
+        label: 'Aprovar certificado',
+        tone: 'success',
+        text: getDefaultAdminFeedback(certificate, 'aprovado')
+      },
+      {
+        label: 'Rejeição pelo OCR',
+        tone: 'danger',
+        text: getDefaultAdminFeedback(certificate, 'rejeitado')
+      },
+      {
+        label: 'Nome divergente',
+        tone: 'danger',
+        text: 'Certificado rejeitado. O nome do participante no certificado não foi confirmado como o mesmo aluno do sistema. Envie um certificado emitido no nome correto.'
+      },
+      {
+        label: 'Carga horária divergente',
+        tone: 'danger',
+        text: 'Certificado rejeitado. A carga horária informada não corresponde à carga horária detectada no certificado. Revise os dados e envie novamente.'
+      },
+      {
+        label: 'Instituição ausente',
+        tone: 'warning',
+        text: 'Correção necessária. O OCR não identificou instituição, empresa responsável ou CNPJ no certificado. Envie um comprovante que contenha a instituição emissora.'
+      },
+      {
+        label: 'Documento ilegível',
+        tone: 'danger',
+        text: 'Certificado rejeitado. O documento está ilegível ou não possui texto suficiente para validação. Envie uma imagem/PDF com melhor qualidade.'
+      }
+    ];
+
+    if (missing.includes('data')) {
+      templates.push({
+        label: 'Data ausente',
+        tone: 'warning',
+        text: 'Correção necessária. O OCR não identificou a data de conclusão ou emissão do certificado. Envie um comprovante com data visível.'
+      });
+    }
+
+    return templates;
+  }
+
+  function renderFeedbackQuickActions(certificate, canReview) {
+    if (!canReview) return '';
+
+    const templates = getFeedbackTemplates(certificate);
+
+    return `
+      <div class="ocr-feedback-quick-actions">
+        <strong>Feedback rápido</strong>
+        <div>
+          ${templates.map((template) => `
+            <button
+              type="button"
+              class="feedback-template-btn ${template.tone || ''}"
+              data-feedback="${escapeAttribute(template.text)}">
+              ${escapeHtml(template.label)}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function setActiveSection(sectionId) {
     document.querySelectorAll('.panel-section').forEach((section) => section.classList.add('hidden'));
     document.querySelectorAll('[data-section]').forEach((button) => button.classList.remove('active'));
@@ -921,6 +1131,8 @@
       return;
     }
     window.SIGACCharts?.ensureDefaults();
+    const charts = window.SIGACCharts;
+    const chartTheme = charts?.getTheme?.() || { text: '#111827', muted: '#374151', grid: '#e5e7eb', surface: '#ffffff' };
     const approvalCanvas = document.getElementById('chartAprovacaoCursos');
     const statusCanvas = document.getElementById('chartPendencias');
     if (!approvalCanvas || !statusCanvas) return;
@@ -948,7 +1160,7 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillStyle = '#f5f7f4';
+        ctx.fillStyle = chartTheme.text;
         ctx.font = '600 11px Inter, system-ui, sans-serif';
         meta.data.forEach((bar, index) => {
           const value = Number(dataset.data[index] || 0);
@@ -968,17 +1180,16 @@
         const centerY = (chartArea.top + chartArea.bottom) / 2;
         ctx.save();
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = chartTheme.text;
         ctx.font = '600 28px Inter, system-ui, sans-serif';
         ctx.fillText(String(statusTotal), centerX, centerY - 2);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = chartTheme.muted;
         ctx.font = '500 11px Inter, system-ui, sans-serif';
         ctx.fillText('envios totais', centerX, centerY + 18);
         ctx.restore();
       }
     };
 
-    const charts = window.SIGACCharts;
 
     chartApproval = new Chart(approvalCtx, {
       type: 'bar',
@@ -1013,14 +1224,14 @@
             beginAtZero: true,
             max: 100,
             grid: {
-              color: 'rgba(200, 208, 200, 0.09)',
+              color: chartTheme.grid,
               drawTicks: false,
               borderDash: [4, 4]
             },
             ticks: {
               stepSize: 25,
               padding: 8,
-              color: '#9ca3af',
+              color: chartTheme.muted,
               font: { size: 12, weight: '500' },
               callback: (value) => `${value}%`
             }
@@ -1029,7 +1240,7 @@
             grid: { display: false },
             ticks: {
               padding: 10,
-              color: '#f4f5f6',
+              color: chartTheme.text,
               font: { size: 12, weight: '600' }
             }
           })
@@ -1056,7 +1267,7 @@
         datasets: [{
           data: statusValues,
           backgroundColor: ['#ff8a1f', '#34d399', '#ff6f86', '#f4bf52'],
-          borderColor: '#181a1d',
+          borderColor: chartTheme.surface,
           borderWidth: 4,
           spacing: 3,
           borderRadius: 10,
@@ -1069,7 +1280,7 @@
         plugins: {
           legend: charts.createLegend({
             labels: {
-              color: '#ffffff',
+              color: chartTheme.text,
               generateLabels: (chart) => {
                 const colors = chart.data.datasets[0].backgroundColor;
                 return chart.data.labels.map((label, index) => {
@@ -1079,7 +1290,7 @@
                     text: `${label}  ${value} (${share}%)`,
                     fillStyle: colors[index],
                     strokeStyle: colors[index],
-                    fontColor: '#ffffff',
+                    fontColor: chartTheme.text,
                     hidden: !chart.getDataVisibility(index),
                     index,
                     lineWidth: 0,
@@ -1261,8 +1472,8 @@
     const usersSearchTerm = normalize(document.getElementById('usersSearchInput')?.value || '');
     const users = SIGACStore.listUsers()
       .filter((user) => globalSearchTerm || user.tipo !== 'superadmin')
-      .filter((user) => matchesSearch(`${user.nome} ${user.email} ${user.tipo} ${user.courseId || ''} ${(user.courseIds || []).join(' ')}`))
-      .filter((user) => !usersSearchTerm || normalize(`${user.nome} ${user.email}`).includes(usersSearchTerm))
+      .filter((user) => matchesSearch(`${user.nome} ${user.email} ${user.matricula || ''} ${user.tipo} ${user.courseId || ''} ${(user.courseIds || []).join(' ')}`))
+      .filter((user) => !usersSearchTerm || normalize(`${user.nome} ${user.email} ${user.matricula || ''}`).includes(usersSearchTerm))
       .filter((user) => !profileFilter || user.tipo === profileFilter)
       .filter((user) => {
         if (!courseFilter) return true;
@@ -1287,10 +1498,13 @@
       const roleLabel = user.tipo === 'superadmin' ? 'Super admin' : user.tipo === 'coordenador' ? 'Coordenador' : 'Aluno';
       const action = user.tipo === 'superadmin'
         ? '<span class="small admin-user-protected">Protegido</span>'
-        : `<button class="toggle-status secondary admin-user-action-button" data-id="${user.id}" data-active="${user.ativo}">${user.ativo ? 'Desativar' : 'Ativar'}</button>`;
+        : `<button class="toggle-status secondary admin-user-action-button" data-id="${user.id}" data-active="${user.ativo}">${user.ativo ? 'Desativar' : 'Ativar'}</button>
+           <button class="reset-user-password secondary admin-user-action-button" data-id="${user.id}" data-name="${escapeHtml(user.nome)}" type="button">Redefinir senha</button>
+           <button class="delete-user danger admin-user-action-button admin-user-delete-button" data-id="${user.id}" data-name="${escapeHtml(user.nome)}" type="button">Excluir</button>`;
       return `
         <tr class="admin-user-row ${user.ativo ? 'is-active' : 'is-inactive'}">
           <td data-label="Nome"><strong class="admin-user-name">${escapeHtml(user.nome)}</strong></td>
+          <td data-label="Matrícula"><span class="admin-user-email">${escapeHtml(user.matricula || 'Matrícula não gerada')}</span></td>
           <td data-label="E-mail"><span class="admin-user-email">${escapeHtml(user.email)}</span></td>
           <td data-label="Perfil"><span class="admin-user-role">${escapeHtml(roleLabel)}</span></td>
           <td data-label="Vinculo"><span class="admin-user-link">${escapeHtml(link)}</span></td>
@@ -1299,7 +1513,7 @@
           <td data-label="Ação"><div class="admin-user-actions">${action}</div></td>
         </tr>
       `;
-    }).join('') || `<tr class="admin-users-empty-row"><td colspan="7">${globalSearchTerm || usersSearchTerm ? 'Nenhum usuário encontrado para a busca.' : 'Nenhum usuário encontrado para os filtros selecionados.'}</td></tr>`;
+    }).join('') || `<tr class="admin-users-empty-row"><td colspan="8">${globalSearchTerm || usersSearchTerm ? 'Nenhum usuário encontrado para a busca.' : 'Nenhum usuário encontrado para os filtros selecionados.'}</td></tr>`;
 
     const first = users[0];
     if (first) {
@@ -1323,6 +1537,7 @@
               <span class="badge ${first.ativo ? 'aprovado' : 'rejeitado'}">${statusLabelText}</span>
             </div>
             <span>${escapeHtml(first.email)}</span>
+            <span>Matrícula: ${escapeHtml(first.matricula || 'Sem matrícula')}</span>
             <div class="profile-chips">${courseChips}</div>
           </div>
         </article>
@@ -1355,6 +1570,38 @@
       button.addEventListener('click', async () => {
         try {
           await SIGACStore.updateUserStatus(button.dataset.id, button.dataset.active !== 'true');
+          renderAll(SIGACStore.getCurrentUser());
+        } catch (error) {
+          showMessage('userFormMessage', error.message, 'error');
+        }
+      });
+    });
+    document.querySelectorAll('.reset-user-password').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+      button.addEventListener('click', async () => {
+        const userName = button.dataset.name || 'este usuário';
+        if (!window.confirm(`Redefinir a senha de ${userName}? O usuário terá que criar uma senha definitiva no primeiro login.`)) return;
+        try {
+          const response = await SIGACStore.resetUserPassword(button.dataset.id);
+          const temp = response.temporaryPassword || 'não informada';
+          const matricula = response.matricula || response.user?.matricula || 'sem matrícula';
+          showMessage('userFormMessage', `Senha temporária gerada para ${userName}. Matrícula: ${matricula}. Senha temporária: ${temp}. Mostre essa senha apenas ao usuário.`, 'success');
+          renderAll(SIGACStore.getCurrentUser());
+        } catch (error) {
+          showMessage('userFormMessage', error.message, 'error');
+        }
+      });
+    });
+    document.querySelectorAll('.delete-user').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+      button.addEventListener('click', async () => {
+        const userName = button.dataset.name || 'este usuário';
+        if (!window.confirm(`Excluir ${userName}? Esta ação remove o usuário e seus vínculos do SIGAC.`)) return;
+        try {
+          await SIGACStore.deleteUser(button.dataset.id);
+          showMessage('userFormMessage', 'Usuário excluído com sucesso.', 'success');
           renderAll(SIGACStore.getCurrentUser());
         } catch (error) {
           showMessage('userFormMessage', error.message, 'error');
@@ -1437,7 +1684,7 @@
     const users = SIGACStore.listUsers();
     const linkRows = users
       .filter((user) => user.tipo !== 'superadmin')
-      .filter((user) => matchesSearch(`${user.nome} ${user.email} ${user.tipo} ${user.courseId || ''} ${(user.courseIds || []).join(' ')}`))
+      .filter((user) => matchesSearch(`${user.nome} ${user.email} ${user.matricula || ''} ${user.tipo} ${user.courseId || ''} ${(user.courseIds || []).join(' ')}`))
       .slice(0, 12);
     document.getElementById('linksHistoryList').innerHTML = linkRows.map((user) => {
         const courseIds = user.tipo === 'aluno'
@@ -1729,28 +1976,45 @@
 
   function renderCertificates() {
     const data = SIGACStore.getAdminDashboardData();
-    const adminFilter = document.getElementById('certificateAdminStatusFilter')?.value || '';
+    const allCertificates = data.certificates || [];
+
+    const adminSelect = document.getElementById('certificateAdminStatusFilter');
     const ocrFilter = document.getElementById('certificateOcrStatusFilter')?.value || '';
-    const certificates = (data.certificates || [])
+
+    if (adminSelect && !adminSelect.value) {
+      adminSelect.value = 'pendente';
+    }
+
+    const adminFilter = adminSelect?.value || 'pendente';
+
+    const certificates = allCertificates
       .filter((certificate) => !adminFilter || certificate.adminStatus === adminFilter)
       .filter((certificate) => !ocrFilter || certificate.ocrStatus === ocrFilter)
       .filter((certificate) => matchesSearch(`${certificate.fileName} ${certificate.sender?.nome || ''} ${certificate.senderType} ${statusLabel(certificate.adminStatus)} ${statusLabel(certificate.ocrStatus)}`));
+
     document.getElementById('certificateAdminStats').innerHTML = `
-      <div class="card"><h3>Pendentes</h3><div class="metric-value">${data.certificates.filter((item) => item.adminStatus === 'pendente').length}</div></div>
-      <div class="card"><h3>OCR aprovado automaticamente</h3><div class="metric-value">${data.certificates.filter((item) => item.ocrStatus === 'aprovado_automatico').length}</div></div>
-      <div class="card"><h3>OCR em revisão manual</h3><div class="metric-value">${data.certificates.filter((item) => item.ocrStatus === 'analise_manual').length}</div></div>
-      <div class="card"><h3>Rejeitados</h3><div class="metric-value">${data.certificates.filter((item) => item.adminStatus === 'rejeitado').length}</div></div>
+      <div class="card"><h3>Pendentes</h3><div class="metric-value">${allCertificates.filter((item) => item.adminStatus === 'pendente').length}</div></div>
+      <div class="card"><h3>OCR aprovado automaticamente</h3><div class="metric-value">${allCertificates.filter((item) => item.ocrStatus === 'aprovado_automatico').length}</div></div>
+      <div class="card"><h3>OCR em revisão manual</h3><div class="metric-value">${allCertificates.filter((item) => item.ocrStatus === 'analise_manual').length}</div></div>
+      <div class="card"><h3>Rejeitados</h3><div class="metric-value">${allCertificates.filter((item) => item.adminStatus === 'rejeitado').length}</div></div>
     `;
+
     const meta = document.getElementById('certificatesQueueMeta');
     if (meta) {
       const pending = certificates.filter((item) => item.adminStatus === 'pendente').length;
       const divergent = certificates.filter((item) => ['analise_manual', 'rejeitado_automatico'].includes(item.ocrStatus)).length;
-      meta.textContent = `${certificates.length} certificado(s) | ${pending} pendente(s) | ${divergent} divergencia(s) OCR`;
+      meta.textContent = `${certificates.length} certificado(s) exibidos | ${pending} pendente(s) | ${divergent} divergência(s) OCR`;
     }
 
     const container = document.getElementById('certificatesAdminList');
+
     if (!certificates.length) {
-      container.innerHTML = `<div class="admin-certificates-empty"><strong>Nenhum certificado encontrado</strong><span>${globalSearchTerm ? 'Nenhum resultado para a busca atual.' : 'Ajuste os filtros para revisar outros status.'}</span></div>`;
+      container.innerHTML = `
+        <div class="admin-certificates-empty">
+          <strong>Nenhum certificado encontrado</strong>
+          <span>${globalSearchTerm ? 'Nenhum resultado para a busca atual.' : 'Os certificados aprovados ou rejeitados ficam ocultos da fila principal. Use os filtros para consultar outros status.'}</span>
+        </div>
+      `;
       return;
     }
 
@@ -1759,50 +2023,96 @@
       const ocrDivergent = ['analise_manual', 'rejeitado_automatico'].includes(certificate.ocrStatus) || (certificate.missingFields || []).length;
       const pending = certificate.adminStatus === 'pendente';
       const canReview = pending;
+      const finalReviewClass = certificate.adminStatus === 'aprovado' ? 'is-approved' : certificate.adminStatus === 'rejeitado' ? 'is-rejected' : '';
+      const ocrToneClass = certificate.ocrStatus === 'aprovado_automatico' ? 'ocr-approved' : certificate.ocrStatus === 'rejeitado_automatico' ? 'ocr-rejected' : certificate.ocrStatus === 'analise_manual' ? 'ocr-manual' : '';
+
+      const detectedActivityName = certificate.detectedCourseName || certificate.detectedTitle || '';
+      const activityCompareClass = detectedActivityName ? 'ocr-match' : 'ocr-missing';
+      const hourCompareClass = certificate.detectedHours > 0 && Number(certificate.detectedHours) === Number(certificate.declaredHours || 0)
+        ? 'ocr-match'
+        : certificate.detectedHours > 0
+          ? 'ocr-mismatch'
+          : 'ocr-missing';
+      const institutionCompareClass = certificate.detectedInstitution ? 'ocr-match' : 'ocr-missing';
+      const dateCompareClass = certificate.detectedDate ? 'ocr-match' : 'ocr-missing';
+
       return `
-      <article class="admin-certificate-card ${pending ? 'is-pending' : ''} ${ocrDivergent ? 'is-divergent' : ''}" data-certificate-id="${certificate.id}">
-        <div class="admin-certificate-head">
-          <div class="submission-person">
-            <span class="avatar-mini submission-avatar">${escapeHtml(getInitial(certificate.sender?.nome))}</span>
-            <div class="submission-copy">
-              <strong>${escapeHtml(certificate.sender?.nome || 'Usuário removido')}</strong>
-              <span>${escapeHtml(senderCourse?.sigla || certificate.senderType || '-')}</span>
+        <article class="admin-certificate-card ${pending ? 'is-pending' : ''} ${ocrDivergent ? 'is-divergent' : ''} ${finalReviewClass} ${ocrToneClass}" data-certificate-id="${certificate.id}">
+          <div class="admin-certificate-head">
+            <div class="submission-person">
+              <span class="avatar-mini submission-avatar">${escapeHtml(getInitial(certificate.sender?.nome))}</span>
+              <div class="submission-copy">
+                <strong>${escapeHtml(certificate.sender?.nome || 'Usuário removido')}</strong>
+                <span>${escapeHtml(senderCourse?.sigla || certificate.senderType || '-')}</span>
+              </div>
+            </div>
+            <span class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(statusLabel(certificate.adminStatus))}</span>
+          </div>
+
+          <h3 title="${escapeHtml(certificate.fileName)}">${escapeHtml(certificate.fileName)}</h3>
+
+          <div class="admin-certificate-priority">
+            ${pending ? '<span>Pendente</span>' : ''}
+            ${ocrDivergent ? '<span>OCR divergente</span>' : ''}
+          </div>
+
+          <div class="admin-certificate-meta-grid">
+            <div><span>Curso</span><strong>${escapeHtml(senderCourse?.sigla || '-')}</strong></div>
+            <div><span>Horas declaradas</span><strong>${certificate.declaredHours || 0}h</strong></div>
+            <div><span>Data</span><strong>${formatDate(certificate.createdAt)}</strong></div>
+            <div><span>Aluno</span><strong>${escapeHtml(certificate.sender?.nome || 'Usuário removido')}</strong></div>
+          </div>
+
+          <div class="admin-certificate-status-row">
+            <span><strong>OCR</strong><em class="badge ${badgeClass(certificate.ocrStatus)}">${escapeHtml(statusLabel(certificate.ocrStatus))}</em></span>
+            <span><strong>Admin</strong><em class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(statusLabel(certificate.adminStatus))}</em></span>
+          </div>
+
+          ${renderOcrDecisionPanel(certificate)}
+
+          <p class="small admin-certificate-summary">
+            <strong>Resumo:</strong> ${escapeHtml(buildAdminFriendlyMessage(certificate))}
+          </p>
+
+          <div class="ocr-compare">
+            <div><strong>Campo</strong><strong>Informado</strong><strong>Detectado pelo OCR</strong></div>
+            <div class="${activityCompareClass}">
+              <span>Nome da atividade</span>
+              <span>${escapeHtml(certificate.observation || 'Não informado')}</span>
+              <span>${escapeHtml(detectedActivityName || 'Não identificado')}</span>
+            </div>
+            <div class="${hourCompareClass}">
+              <span>Carga horária</span>
+              <span>${certificate.declaredHours || 0}h</span>
+              <span>${certificate.detectedHours || 0}h</span>
+            </div>
+            <div class="${institutionCompareClass}">
+              <span>Instituição</span>
+              <span>Não informado</span>
+              <span>${escapeHtml(certificate.detectedInstitution || 'Não identificada')}</span>
+            </div>
+            <div class="${dateCompareClass}">
+              <span>Data</span>
+              <span>${formatDate(certificate.createdAt)}</span>
+              <span>${escapeHtml(certificate.detectedDate || 'Não identificada')}</span>
             </div>
           </div>
-          <span class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(statusLabel(certificate.adminStatus))}</span>
-        </div>
-        <h3 title="${escapeHtml(certificate.fileName)}">${escapeHtml(certificate.fileName)}</h3>
-        <div class="admin-certificate-priority">
-          ${pending ? '<span>Pendente</span>' : ''}
-          ${ocrDivergent ? '<span>OCR divergente</span>' : ''}
-        </div>
-        <div class="admin-certificate-meta-grid">
-          <div><span>Curso</span><strong>${escapeHtml(senderCourse?.sigla || '-')}</strong></div>
-          <div><span>Horas declaradas</span><strong>${certificate.declaredHours || 0}h</strong></div>
-          <div><span>Data</span><strong>${formatDate(certificate.createdAt)}</strong></div>
-          <div><span>Aluno</span><strong>${escapeHtml(certificate.sender?.nome || 'Usuário removido')}</strong></div>
-        </div>
-        <div class="admin-certificate-status-row">
-          <span><strong>OCR</strong><em class="badge ${badgeClass(certificate.ocrStatus)}">${escapeHtml(statusLabel(certificate.ocrStatus))}</em></span>
-          <span><strong>Admin</strong><em class="badge ${badgeClass(certificate.adminStatus)}">${escapeHtml(statusLabel(certificate.adminStatus))}</em></span>
-        </div>
-        <p class="small admin-certificate-summary"><strong>Resumo:</strong> ${escapeHtml(buildAdminFriendlyMessage(certificate))}</p>
-        <div class="ocr-compare">
-          <div><strong>Campo</strong><strong>Informado</strong><strong>Detectado pelo OCR</strong></div>
-          <div><span>Nome da atividade</span><span>${escapeHtml(certificate.observation || 'Não informado')}</span><span>${escapeHtml(certificate.detectedTitle || 'Não identificado')}</span></div>
-          <div><span>Carga horária</span><span>${certificate.declaredHours || 0}h</span><span>${certificate.detectedHours || 0}h</span></div>
-          <div><span>Institui\u00e7\u00e3o</span><span>N\u00e3o informado</span><span>${escapeHtml(certificate.detectedInstitution || 'N\u00e3o identificada')}</span></div>
-          <div><span>Data</span><span>${formatDate(certificate.createdAt)}</span><span>${escapeHtml(certificate.detectedDate || 'Não identificada')}</span></div>
-        </div>
-        ${certificate.adminFeedback ? `<p class="small"><strong>Feedback do admin:</strong> ${escapeHtml(certificate.adminFeedback)}</p>` : ''}
-        <div class="actions-row admin-certificate-actions">
-          <button type="button" class="secondary download-cert-btn">Abrir arquivo</button>
-          <button type="button" class="secondary run-ocr-btn">Processar OCR</button>
-          ${canReview ? '<button type="button" class="success approve-cert-btn">Aprovar</button><button type="button" class="danger reject-cert-btn">Rejeitar</button>' : ''}
-        </div>
-        <div class="field admin-certificate-feedback"><label>Feedback do admin</label><textarea class="certificate-feedback" placeholder="Comentário final para o remetente" ${canReview ? '' : 'disabled'}>${escapeHtml(certificate.adminFeedback || '')}</textarea></div>
-      </article>
-    `;
+
+          ${certificate.adminFeedback ? `<p class="small"><strong>Feedback do admin:</strong> ${escapeHtml(certificate.adminFeedback)}</p>` : ''}
+
+          <div class="actions-row admin-certificate-actions">
+            <button type="button" class="secondary download-cert-btn">Abrir arquivo</button>
+            <button type="button" class="secondary run-ocr-btn">Processar OCR</button>
+            ${canReview ? '<button type="button" class="success approve-cert-btn">Aprovar</button><button type="button" class="danger reject-cert-btn">Rejeitar</button>' : ''}
+          </div>
+
+          <div class="field admin-certificate-feedback">
+            <label>Feedback do admin</label>
+            ${renderFeedbackQuickActions(certificate, canReview)}
+            <textarea class="certificate-feedback" placeholder="Comentário final para o remetente" ${canReview ? '' : 'disabled'}>${escapeHtml(certificate.adminFeedback || '')}</textarea>
+          </div>
+        </article>
+      `;
     }).join('');
   }
 
@@ -2000,18 +2310,40 @@
 
   function bindDynamicActions(user) {
     document.querySelectorAll('[data-section-jump]').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
       button.addEventListener('click', async () => {
         await openSection(button.dataset.sectionJump);
       });
     });
 
+    document.querySelectorAll('.feedback-template-btn').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
+      button.addEventListener('click', () => {
+        const card = button.closest('[data-certificate-id]');
+        const textarea = card?.querySelector('.certificate-feedback');
+        if (!textarea) return;
+
+        textarea.value = button.dataset.feedback || '';
+        textarea.focus();
+      });
+    });
+
     document.querySelectorAll('.run-ocr-btn').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
       button.addEventListener('click', async () => {
         const data = SIGACStore.getAdminDashboardData();
         const card = button.closest('[data-certificate-id]');
         const certificateId = card.dataset.certificateId;
         const current = data.certificates.find((item) => item.id === certificateId);
+
         if (!current) return;
+
         if (!data.settings.ocrDisponivel) {
           showMessage('settingsMessage', 'Ative o OCR nas configurações antes de processar certificados.', 'error');
           setActiveSection('configuracoes');
@@ -2020,10 +2352,13 @@
 
         button.disabled = true;
         button.textContent = 'Processando...';
+
         try {
           const file = await SIGACStore.getAdminCertificateFile(current.id);
           const result = await window.SIGACOCR.analyzeCertificateData(file.fileData, { expectedName: current.sender?.nome || '' });
+
           await SIGACStore.saveCertificateOcrResult(user.id, current.id, result);
+
           renderAll(user);
           setActiveSection('certificados');
         } catch (error) {
@@ -2036,12 +2371,18 @@
     });
 
     document.querySelectorAll('.download-cert-btn').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
       button.addEventListener('click', async () => {
         const card = button.closest('[data-certificate-id]');
         const data = SIGACStore.getAdminDashboardData();
         const current = data.certificates.find((item) => item.id === card.dataset.certificateId);
+
         if (!current) return;
+
         button.disabled = true;
+
         try {
           await SIGACStore.openAdminCertificateFile(current.id);
         } catch (error) {
@@ -2053,34 +2394,68 @@
     });
 
     document.querySelectorAll('.approve-cert-btn').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
       button.addEventListener('click', async () => {
         if (button.disabled) return;
+
         const card = button.closest('[data-certificate-id]');
+        const data = SIGACStore.getAdminDashboardData();
+        const current = data.certificates.find((item) => item.id === card.dataset.certificateId);
+        const textarea = card.querySelector('.certificate-feedback');
+
+        if (!current) return;
+
         button.disabled = true;
+
         try {
-          await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'aprovado', card.querySelector('.certificate-feedback').value);
-          renderAll(user);
-          setActiveSection('certificados');
+          const feedback = textarea.value.trim() || getDefaultAdminFeedback(current, 'aprovado');
+
+          await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'aprovado', feedback);
+
+          card.classList.add('admin-certificate-card-hiding');
+
+          setTimeout(() => {
+            renderAll(user);
+            setActiveSection('certificados');
+          }, 220);
         } catch (error) {
           showMessage('settingsMessage', error.message, 'error');
-        } finally {
           button.disabled = false;
         }
       });
     });
 
     document.querySelectorAll('.reject-cert-btn').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
       button.addEventListener('click', async () => {
         if (button.disabled) return;
+
         const card = button.closest('[data-certificate-id]');
+        const data = SIGACStore.getAdminDashboardData();
+        const current = data.certificates.find((item) => item.id === card.dataset.certificateId);
+        const textarea = card.querySelector('.certificate-feedback');
+
+        if (!current) return;
+
         button.disabled = true;
+
         try {
-          await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'rejeitado', card.querySelector('.certificate-feedback').value);
-          renderAll(user);
-          setActiveSection('certificados');
+          const feedback = textarea.value.trim() || getDefaultAdminFeedback(current, 'rejeitado');
+
+          await SIGACStore.reviewCertificate(user.id, card.dataset.certificateId, 'rejeitado', feedback);
+
+          card.classList.add('admin-certificate-card-hiding');
+
+          setTimeout(() => {
+            renderAll(user);
+            setActiveSection('certificados');
+          }, 220);
         } catch (error) {
           showMessage('settingsMessage', error.message, 'error');
-        } finally {
           button.disabled = false;
         }
       });
@@ -2148,7 +2523,7 @@
           showMessage('userFormMessage', 'Selecione ao menos um curso para o coordenador.', 'error');
           return;
         }
-        await SIGACStore.createUser({
+        const response = await SIGACStore.createUser({
           nome: document.getElementById('userNameInput').value,
           email: document.getElementById('userEmailInput').value,
           senha: document.getElementById('userPasswordInput').value,
@@ -2159,7 +2534,8 @@
         });
         document.getElementById('userForm').reset();
         populateSharedSelects();
-        showMessage('userFormMessage', 'Usuário cadastrado com sucesso.', 'success');
+        const temp = response.temporaryPassword ? ` Matrícula: ${response.matricula}. Senha temporária: ${response.temporaryPassword}.` : '';
+        showMessage('userFormMessage', `Usuário cadastrado com sucesso.${temp} O primeiro login exigirá troca de senha.`, 'success');
         renderAll(user);
       } catch (error) {
         showMessage('userFormMessage', error.message, 'error');
@@ -2327,6 +2703,10 @@
       setupForms(user);
       setupGlobalSearch();
       renderSection('dashboard', user);
+      window.addEventListener('sigac:themechange', () => {
+        window.SIGACCharts?.ensureDefaults?.();
+        renderDashboard();
+      });
       bindDynamicActions(user);
     } catch (error) {
       console.error('[SIGAC Admin] Erro recebido', error);

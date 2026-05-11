@@ -668,6 +668,11 @@
       throw new Error('Acesso negado.');
     }
 
+    if (state.currentUser?.mustChangePassword && !window.location.pathname.endsWith('/resetarsenha.html')) {
+      window.location.href = 'resetarsenha.html?mode=temporary';
+      return clone(state.currentUser);
+    }
+
     await refreshForCurrentRole();
     logPerf(`bootstrap:${requiredRole || 'any'}`, startedAt);
     return clone(state.currentUser);
@@ -680,6 +685,9 @@
     });
     saveToken(payload.token);
     state.currentUser = payload.user || null;
+    if (payload.mustChangePassword || state.currentUser?.mustChangePassword) {
+      return clone({ ...state.currentUser, mustChangePassword: true });
+    }
     await refreshForCurrentRole();
     return clone(state.currentUser);
   }
@@ -710,6 +718,16 @@
     });
   }
 
+  async function changeTemporaryPassword(senha, confirmar) {
+    const response = await requestJson('/api/auth/change-temporary-password', {
+      method: 'POST',
+      body: JSON.stringify({ senha, confirmar })
+    });
+    clearToken();
+    resetState();
+    return response;
+  }
+
   function getCurrentUser() {
     return clone(state.currentUser);
   }
@@ -734,21 +752,23 @@
   }
 
   async function createUser(payload) {
-    await requestJson('/api/admin/users', {
+    const response = await requestJson('/api/admin/users', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
     await refreshAdminData();
     if (isLoaded('admin', 'users')) await ensureAdminTabData('users', { force: true });
+    return response;
   }
 
   async function createCoordinatorStudent(payload) {
-    await requestJson('/api/coordinator/students', {
+    const response = await requestJson('/api/coordinator/students', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
     await refreshCoordinatorData();
     if (isLoaded('coordinator', 'students')) await ensureCoordinatorTabData('students', { force: true });
+    return response;
   }
 
   async function updateUserStatus(userId, ativo) {
@@ -758,6 +778,24 @@
     });
     await refreshAdminData();
     if (isLoaded('admin', 'users')) await ensureAdminTabData('users', { force: true });
+  }
+
+  async function deleteUser(userId) {
+    await requestJson(`/api/admin/users/${encodeURIComponent(userId)}`, {
+      method: 'DELETE'
+    });
+    await refreshAdminData();
+    if (isLoaded('admin', 'users')) await ensureAdminTabData('users', { force: true });
+    if (isLoaded('admin', 'links')) await ensureAdminTabData('links', { force: true });
+  }
+
+  async function resetUserPassword(userId) {
+    const response = await requestJson(`/api/admin/users/${encodeURIComponent(userId)}/reset-password`, {
+      method: 'POST'
+    });
+    await refreshAdminData();
+    if (isLoaded('admin', 'users')) await ensureAdminTabData('users', { force: true });
+    return response;
   }
 
   async function assignStudentToCourse(studentId, courseId) {
@@ -1075,69 +1113,108 @@
     return result;
   }
 
+  function readCssColor(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  function getChartTheme() {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    return {
+      isDark,
+      text: readCssColor('--chart-text', isDark ? '#e2e8f0' : '#111827'),
+      muted: readCssColor('--muted', isDark ? '#cbd5e1' : '#374151'),
+      grid: readCssColor('--chart-grid', isDark ? 'rgba(226, 232, 240, 0.18)' : '#e5e7eb'),
+      surface: readCssColor('--bg-graph', isDark ? '#0f172a' : '#ffffff'),
+      tooltipBg: isDark ? '#0f172a' : '#111827',
+      tooltipTitle: '#ffffff',
+      tooltipBody: '#f8fafc',
+      tooltipBorder: isDark ? 'rgba(226, 232, 240, 0.22)' : 'rgba(17, 24, 39, 0.18)'
+    };
+  }
+
   window.SIGACCharts = {
+    getTheme: getChartTheme,
     ensureDefaults() {
-      if (!window.Chart || window.Chart.__sigacDefaultsApplied) return;
+      if (!window.Chart) return getChartTheme();
+      const theme = getChartTheme();
       Chart.defaults.responsive = true;
       Chart.defaults.maintainAspectRatio = false;
-      Chart.defaults.color = '#d7dbe1';
-      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+      Chart.defaults.color = theme.text;
+      Chart.defaults.borderColor = theme.grid;
       Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
       Chart.defaults.font.weight = '400';
       Chart.defaults.plugins.legend.labels.usePointStyle = true;
       Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
-      Chart.defaults.plugins.legend.labels.color = '#f4f5f6';
-      Chart.defaults.plugins.tooltip.backgroundColor = '#181a1d';
-      Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
-      Chart.defaults.plugins.tooltip.bodyColor = '#d7dbe1';
-      Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,0.14)';
+      Chart.defaults.plugins.legend.labels.color = theme.text;
+      Chart.defaults.plugins.tooltip.backgroundColor = theme.tooltipBg;
+      Chart.defaults.plugins.tooltip.titleColor = theme.tooltipTitle;
+      Chart.defaults.plugins.tooltip.bodyColor = theme.tooltipBody;
+      Chart.defaults.plugins.tooltip.borderColor = theme.tooltipBorder;
       Chart.defaults.plugins.tooltip.borderWidth = 1;
       Chart.defaults.plugins.tooltip.padding = 12;
-      window.Chart.__sigacDefaultsApplied = true;
+      return theme;
+    },
+    refreshAll() {
+      if (!window.Chart) return;
+      const theme = this.ensureDefaults();
+      Object.values(Chart.instances || {}).forEach((chart) => {
+        if (!chart?.options) return;
+        if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = theme.text;
+        Object.values(chart.options.scales || {}).forEach((scale) => {
+          if (scale.ticks) scale.ticks.color = theme.muted;
+          if (scale.grid) scale.grid.color = theme.grid;
+        });
+        chart.update('none');
+      });
     },
     mergeOptions(base, override) {
       return mergeChartOptions(base, override);
     },
     createTooltip(overrides = {}) {
+      const theme = getChartTheme();
       return mergeChartOptions({
         displayColors: true,
-        backgroundColor: '#181a1d',
-        titleColor: '#ffffff',
-        bodyColor: '#dce7d6',
-        borderColor: 'rgba(255,255,255,0.14)',
+        backgroundColor: theme.tooltipBg,
+        titleColor: theme.tooltipTitle,
+        bodyColor: theme.tooltipBody,
+        borderColor: theme.tooltipBorder,
         borderWidth: 1,
         padding: 12
       }, overrides);
     },
     createLegend(overrides = {}) {
+      const theme = getChartTheme();
       return mergeChartOptions({
         position: 'bottom',
         labels: {
-          color: '#f4f5f6',
+          color: theme.text,
           boxWidth: 10,
           boxHeight: 10,
           padding: 14,
           usePointStyle: true,
           pointStyle: 'circle',
-          font: { size: 12, weight: '500' }
+          font: { size: 12, weight: '700' }
         }
       }, overrides);
     },
     createScale(overrides = {}) {
+      const theme = getChartTheme();
       return mergeChartOptions({
         border: { display: false },
         grid: {
-          color: 'rgba(255,255,255,0.07)',
+          color: theme.grid,
           drawTicks: false
         },
         ticks: {
-          color: '#9ca3af',
+          color: theme.muted,
           padding: 8,
-          font: { size: 12, weight: '500' }
+          font: { size: 12, weight: '600' }
         }
       }, overrides);
     },
     createOptions({ scales = null, plugins = {}, layout = {}, ...rest } = {}) {
+      this.ensureDefaults();
       const options = {
         responsive: true,
         maintainAspectRatio: false,
@@ -1166,6 +1243,8 @@
     createUser,
     createCoordinatorStudent,
     updateUserStatus,
+    deleteUser,
+    resetUserPassword,
     assignStudentToCourse,
     setActiveStudentCourse,
     assignCoordinatorCourses,

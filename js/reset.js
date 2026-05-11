@@ -2,10 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = getApiBase();
   const form = document.getElementById('resetForm');
   const message = document.getElementById('resetMessage');
-  const requestButton = document.getElementById('requestResetToken');
-  const tokenInput = document.getElementById('resetToken');
+  const intro = document.getElementById('resetIntroMessage');
+  const TOKEN_KEY = 'sigac_auth_token';
+  const params = new URLSearchParams(window.location.search);
+  const temporaryMode = params.get('mode') === 'temporary';
 
   function show(text, type) {
+    if (!message) return;
     message.textContent = text;
     message.className = `message ${type}`;
     message.classList.remove('hidden');
@@ -53,35 +56,32 @@ document.addEventListener('DOMContentLoaded', () => {
     return payload;
   }
 
-  const initialToken = new URLSearchParams(window.location.search).get('token');
-  if (initialToken) {
-    tokenInput.value = initialToken;
+  function disableFormForDirectAccess() {
+    if (!form) return;
+    form.querySelectorAll('input, button[type="submit"]').forEach((element) => {
+      element.disabled = true;
+    });
+    if (intro) {
+      intro.textContent = 'Recuperação por token foi desativada por segurança. Solicite ao administrador ou coordenador uma senha temporária e faça login normalmente. Depois disso, o SIGAC abrirá esta tela para cadastrar a senha definitiva.';
+      intro.className = 'message warning';
+    }
+    show('Por segurança, esta tela não gera token e não troca senha só pelo e-mail.', 'info');
   }
 
-  requestButton.addEventListener('click', async () => {
-    const email = document.getElementById('email').value.trim();
-    if (!email) {
-      show('Informe o e-mail cadastrado para receber o token.', 'error');
-      return;
-    }
+  const sessionToken = localStorage.getItem(TOKEN_KEY) || '';
+  if (!temporaryMode || !sessionToken) {
+    disableFormForDirectAccess();
+    return;
+  }
 
-    try {
-      requestButton.disabled = true;
-      await requestJson('/api/auth/request-password-reset', {
-        method: 'POST',
-        body: JSON.stringify({ email })
-      });
-      show('Se o e-mail existir e estiver ativo, o token foi enviado.', 'success');
-    } catch (error) {
-      show(error.message, 'error');
-    } finally {
-      requestButton.disabled = false;
-    }
-  });
+  if (intro) {
+    intro.textContent = 'Primeiro acesso: cadastre uma senha definitiva. A senha temporária deixará de valer após salvar.';
+    intro.className = 'message info';
+  }
+  show('Sessão temporária encontrada. Defina sua nova senha para continuar.', 'info');
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const token = tokenInput.value.trim();
     const senha = document.getElementById('senha').value;
     const confirmar = document.getElementById('confirmarSenha').value;
 
@@ -91,12 +91,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      await requestJson('/api/auth/reset-password', {
+      await requestJson('/api/auth/change-temporary-password', {
         method: 'POST',
-        body: JSON.stringify({ token, senha })
+        headers: { Authorization: `Bearer ${sessionToken}` },
+        body: JSON.stringify({ senha, confirmar })
       });
-
-      show('Senha alterada com sucesso.', 'success');
+      localStorage.removeItem(TOKEN_KEY);
+      show('Senha definitiva cadastrada com sucesso. Faça login novamente.', 'success');
       setTimeout(() => {
         window.location.href = 'loginsigac.html';
       }, 1200);

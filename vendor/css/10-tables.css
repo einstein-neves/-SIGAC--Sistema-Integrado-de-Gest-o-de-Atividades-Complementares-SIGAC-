@@ -1,0 +1,56 @@
+/* Tabelas */
+.table-wrap,
+.admin-users-table-wrap,
+.admin-courses-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+}
+
+table,
+.admin-users-table,
+.admin-courses-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+  font-size: 13px;
+}
+
+thead th,
+.admin-users-table th,
+.admin-courses-table th {
+  background: var(--table-head-bg);
+  color: var(--table-head-text);
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--table-border);
+}
+
+tbody td,
+.admin-users-table td,
+.admin-courses-table td {
+  padding: 11px 12px;
+  color: var(--muted-2);
+  border-bottom: 1px solid var(--table-border);
+}
+
+tbody tr,
+.admin-user-row {
+  background: var(--table-row-bg);
+}
+
+tbody tr:hover td,
+.admin-user-row:hover td {
+  background: var(--table-row-hover);
+}
+
+.admin-user-row.is-inactive,
+.admin-link-history-card.is-inactive {
+  opacity: .72;
+}

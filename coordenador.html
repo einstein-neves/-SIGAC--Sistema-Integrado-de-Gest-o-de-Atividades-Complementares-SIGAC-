@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -9,22 +9,27 @@
   <meta name="theme-color" content="#f97316">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="SIGAC">
-  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
+  <script>(function(){try{document.documentElement.dataset.theme=localStorage.getItem('sigac-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}})();</script>
+  <link rel="stylesheet" href="sigac.css?v=matricula-sem-token-2026-05-08">
   <script src="vendor/chart.umd.min.js"></script>
 </head>
 <body>
 <header class="console-header">
-  <div class="console-brand">
+  <a class="console-brand console-brand-home" href="#dashboard" data-section-jump="dashboard" aria-label="Voltar ao início">
     <img src="Logo SIGAC.png" alt="Logo SIGAC">
     <span class="brand-slash">/</span>
     <strong>SIGAC</strong>
-  </div>
+  </a>
   <div class="console-context" aria-label="Contexto da tela">
     <span>Gestão acadêmica</span>
     <strong>Coordenação</strong>
   </div>
   <div class="console-actions">
     <span class="status-pill"><span></span>Coordenador</span>
+    <button type="button" class="header-button theme-toggle" id="themeToggle" aria-pressed="false" title="Alternar modo claro/escuro">
+      <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+      <span class="theme-toggle-label">Modo escuro</span>
+    </button>
     <button type="button" class="header-button" data-section-jump="envios" aria-label="Abrir fila de envios">
       <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 4h6V7H9v2Zm0 4h6v-2H9v2Zm0 4h4v-2H9v2Z"/></svg>
       <span>Avaliações</span>
@@ -54,7 +59,6 @@
         <strong id="userName">Carregando...</strong>
         <span id="userRole">Coordenador</span>
       </span>
-      <span class="org-chevron" aria-hidden="true"></span>
     </div>
 
     <nav class="menu">
@@ -114,7 +118,7 @@
             <form id="studentForm">
               <div class="field"><label for="studentNameInput">Nome completo</label><input id="studentNameInput" type="text" required></div>
               <div class="field"><label for="studentEmailInput">E-mail</label><input id="studentEmailInput" type="email" required></div>
-              <div class="field"><label for="studentPasswordInput">Senha inicial</label><input id="studentPasswordInput" type="text" required minlength="6"></div>
+              <div class="field"><label for="studentPasswordInput">Senha temporária</label><input id="studentPasswordInput" type="text" placeholder="Deixe vazio para gerar automaticamente"><span class="small">O aluno trocará a senha no primeiro acesso.</span></div>
               <div class="field"><label for="studentCourseInput">Curso</label><select id="studentCourseInput" required></select></div>
               <button type="submit">Cadastrar aluno</button>
             </form>
@@ -386,9 +390,10 @@
   </main>
 </div>
 
-<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/theme.js?v=matricula-sem-token-2026-05-08"></script>
+<script src="js/data.js?v=matricula-sem-token-2026-05-08"></script>
 <script src="js/ocr.js"></script>
-<script src="js/coordenador.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/coordenador.js?v=matricula-sem-token-2026-05-08"></script>
 <script src="js/custom-select.js"></script>
 <script src="js/pwa.js"></script>
 </body>

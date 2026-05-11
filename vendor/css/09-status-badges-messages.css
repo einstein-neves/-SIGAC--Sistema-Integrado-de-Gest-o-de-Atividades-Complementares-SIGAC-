@@ -1,0 +1,128 @@
+/* Status, badges e mensagens */
+.badge,
+.status-pill,
+.plan-pill,
+.summary-chip,
+.submission-chip,
+.settings-pill,
+.profile-chips span,
+.admin-link-history-badges span,
+.admin-link-course-chips span,
+.certificate-primary-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 9px;
+  border: 1px solid var(--info-border);
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.1;
+  text-transform: none;
+}
+
+.status-pill span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.badge.aprovado,
+.badge.approved,
+.badge.success,
+.badge.ativo,
+.badge.aberta,
+.badge.aprovado_automatico,
+.admin-aprovado,
+.aprovado .badge,
+.summary-chip.approved {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.badge.em_analise,
+.badge.pendente,
+.badge.pending,
+.badge.warning,
+.badge.analise_manual,
+.badge.nao_processado,
+.badge.correção,
+.badge.correcao,
+.admin-em_analise,
+.admin-pendente,
+.summary-chip.pending {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+
+.badge.rejeitado,
+.badge.reprovado,
+.badge.rejected,
+.badge.error,
+.badge.danger,
+.badge.cancelada,
+.badge.encerrada,
+.badge.rejeitado_automatico,
+.badge.inativo,
+.admin-rejeitado,
+.summary-chip.rejected {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.message,
+.pwa-status {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius);
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.message.success {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.message.warning,
+.message.info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+.message.error,
+.message.danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
+.alert-strip,
+.notice {
+  background: var(--info-soft);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+.alert-critical,
+.risk-row,
+.settings-block-danger,
+.settings-danger-note {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}

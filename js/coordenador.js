@@ -284,6 +284,7 @@
     const statusCtx = document.getElementById('chartStatus').getContext('2d');
     const engagementCtx = document.getElementById('chartEngajamento').getContext('2d');
     const charts = window.SIGACCharts;
+    const chartTheme = charts?.getTheme?.() || { text: '#111827', muted: '#374151', grid: '#e5e7eb', surface: '#ffffff' };
 
     if (chartStatus) chartStatus.destroy();
     if (chartEngajamento) chartEngajamento.destroy();
@@ -295,7 +296,7 @@
         datasets: [{
           data: [data.aprovados, data.rejeitados, data.pendentes],
           backgroundColor: ['#2dd4a2', '#ff6f86', '#f4bf52'],
-          borderColor: '#181a1d',
+          borderColor: chartTheme.surface,
           borderWidth: 4,
           spacing: 3,
           borderRadius: 10,
@@ -336,15 +337,20 @@
         scales: {
           y: charts.createScale({
             beginAtZero: true,
+            grid: {
+              color: chartTheme.grid,
+              drawTicks: false
+            },
             ticks: {
               precision: 0,
-              stepSize: 1
+              stepSize: 1,
+              color: chartTheme.muted
             }
           }),
           x: charts.createScale({
             grid: { display: false },
             ticks: {
-              color: '#f4f5f6',
+              color: chartTheme.text,
               font: { size: 12, weight: '600' }
             }
           })
@@ -583,6 +589,7 @@
               <div>
                 <h3>${escapeHtml(student.nome)}</h3>
                 <p>${escapeHtml(student.email)}</p>
+                <p class="small">Matrícula: ${escapeHtml(student.matricula || 'Sem matrícula')}</p>
               </div>
               <span class="badge ${student.pendingCount ? 'em_analise' : 'aprovado'}">${student.pendingCount ? `${student.pendingCount} pendência(s)` : 'Em dia'}</span>
             </div>
@@ -590,6 +597,10 @@
               <div class="coordinator-student-meta-card accent-card accent-card--info">
                 <span>Curso</span>
                 <strong>${escapeHtml(student.course?.sigla || '-')}</strong>
+              </div>
+              <div class="coordinator-student-meta-card accent-card accent-card--info">
+                <span>Matrícula</span>
+                <strong>${escapeHtml(student.matricula || '-')}</strong>
               </div>
               <div class="coordinator-student-meta-card accent-card">
                 <span>Horas concluidas</span>
@@ -1162,14 +1173,15 @@
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
-        await SIGACStore.createCoordinatorStudent({
+        const response = await SIGACStore.createCoordinatorStudent({
           nome: document.getElementById('studentNameInput').value,
           email: document.getElementById('studentEmailInput').value,
           senha: document.getElementById('studentPasswordInput').value,
           courseId: document.getElementById('studentCourseInput').value
         });
         form.reset();
-        showMessage('studentFormMessage', 'Aluno cadastrado e vinculado ao curso com sucesso.', 'success');
+        const temp = response.temporaryPassword ? ` Matrícula: ${response.matricula}. Senha temporária: ${response.temporaryPassword}.` : '';
+        showMessage('studentFormMessage', `Aluno cadastrado e vinculado ao curso com sucesso.${temp} O primeiro login exigirá troca de senha.`, 'success');
         const freshUser = SIGACStore.getCurrentUser();
         populateCourseSelects(freshUser);
         renderCoordinatorSummary(freshUser);
@@ -1492,6 +1504,10 @@
       });
       renderCoordinatorSummary(user);
       renderCoordinatorSection('dashboard', user);
+      window.addEventListener('sigac:themechange', () => {
+        window.SIGACCharts?.ensureDefaults?.();
+        renderDashboard(user);
+      });
       decorateCoordinatorAccents();
       logPerf('initCoordenador', startedAt);
     } catch (error) {

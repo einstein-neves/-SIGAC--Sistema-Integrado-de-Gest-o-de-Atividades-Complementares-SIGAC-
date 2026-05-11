@@ -9,21 +9,26 @@
   <meta name="theme-color" content="#f97316">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="SIGAC">
-  <link rel="stylesheet" href="sigac.css?v=ui-refino-2026-04-26-charts">
+  <script>(function(){try{document.documentElement.dataset.theme=localStorage.getItem('sigac-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}})();</script>
+  <link rel="stylesheet" href="sigac.css?v=matricula-sem-token-2026-05-08">
 </head>
 <body>
 <header class="console-header">
-  <div class="console-brand">
+  <a class="console-brand console-brand-home" href="#dashboard" data-section-jump="dashboard" aria-label="Voltar ao início">
     <img src="Logo SIGAC.png" alt="Logo SIGAC">
     <span class="brand-slash">/</span>
     <strong>SIGAC</strong>
-  </div>
+  </a>
   <div class="console-context" aria-label="Contexto da tela">
     <span>Área do Aluno</span>
     <strong>Painel do Aluno</strong>
   </div>
   <div class="console-actions">
     <span class="status-pill"><span></span>Aluno</span>
+    <button type="button" class="header-button theme-toggle" id="themeToggle" aria-pressed="false" title="Alternar modo claro/escuro">
+      <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+      <span class="theme-toggle-label">Modo escuro</span>
+    </button>
     <button type="button" class="header-button" data-section-jump="certificados" aria-label="Abrir certificados">
       <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v11H4V4Zm2 2v7h12V6H6Zm3 3h6V7H9v2Zm7 7 2 1.2 2-1.2V22l-2-1.2-2 1.2v-6Zm-10 0h8v2H6v-2Z"/></svg>
       <span>Certificados</span>
@@ -51,7 +56,6 @@
         <strong id="userName">Carregando...</strong>
         <span id="userRole">Aluno</span>
       </span>
-      <span class="org-chevron" aria-hidden="true"></span>
     </div>
 
     <nav class="menu">
@@ -287,8 +291,9 @@
   </div>
 </div>
 
-<script src="js/data.js?v=ui-refino-2026-04-26-charts"></script>
-<script src="js/index.js?v=ui-refino-2026-04-26-charts"></script>
+<script src="js/theme.js?v=matricula-sem-token-2026-05-08"></script>
+<script src="js/data.js?v=matricula-sem-token-2026-05-08"></script>
+<script src="js/index.js?v=matricula-sem-token-2026-05-08"></script>
 <script src="js/custom-select.js"></script>
 <script src="js/pwa.js"></script>
 </body>

@@ -1,0 +1,142 @@
+/* Grids */
+.grid,
+.metrics,
+.dashboard-kpis,
+.dashboard-metrics,
+.activity-summary-grid,
+.certificate-summary-grid,
+.summary-chips,
+.admin-report-metrics,
+.audit-summary-grid,
+.course-tabs-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.metrics,
+.dashboard-kpis,
+.dashboard-metrics,
+.activity-summary-grid,
+.admin-report-metrics,
+.audit-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dual-grid,
+.dashboard-grid,
+.two-col,
+.profile-grid,
+.admin-users-layout,
+.admin-rules-layout,
+.admin-opportunities-layout,
+.admin-reports-layout,
+.admin-link-form-grid,
+.admin-link-flow-card,
+.admin-links-flow-grid,
+.certificate-workspace,
+.dashboard-overview,
+.coordinator-student-top,
+.admin-rule-form-grid,
+.admin-opportunity-form-grid,
+.admin-rule-hours-grid,
+.coordinator-activity-form-grid,
+.coordinator-certificate-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.wide,
+.admin-courses-table-card,
+.admin-certificates-queue-card,
+.admin-submissions-queue-card,
+.admin-users-list-card,
+.admin-rules-list-card,
+.admin-opportunities-list-card,
+.admin-links-history-card,
+.admin-risk-report-card {
+  grid-column: 1 / -1;
+}
+
+.dashboard-shell,
+.coordinator-students-shell,
+.coordinator-certificates-shell,
+.admin-users-section,
+.admin-rules-section,
+.admin-opportunities-section,
+.admin-certificates-section,
+.admin-submissions-section,
+.admin-links-section,
+.admin-reports-section,
+.certificate-header,
+.certificate-workspace,
+.opportunity-panel,
+.activity-filters,
+.certificate-filters,
+.filters-bar,
+.stack-list,
+.list,
+.dashboard-actions-list,
+.dashboard-notifications,
+.quick-actions,
+.timeline,
+.notifications-timeline,
+.audit-timeline,
+.admin-courses-grid,
+.admin-rules-grid,
+.admin-opportunities-grid,
+.admin-certificates-grid,
+.admin-submissions-grid,
+.admin-links-history-grid,
+.coordinator-student-grid,
+.coordinator-activities-grid,
+.coordinator-opportunity-grid,
+.coordinator-certificate-grid,
+.coordinator-rules-grid,
+.coordinator-rule-hints-grid,
+.coordinator-submission-meta,
+.coordinator-certificate-meta,
+.coordinator-student-meta,
+.admin-opportunity-meta-grid,
+.admin-submission-meta-grid,
+.admin-certificate-meta-grid,
+.activity-meta-grid,
+.admin-course-metrics,
+.admin-rule-metrics {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-courses-grid,
+.admin-rules-grid,
+.admin-opportunities-grid,
+.admin-certificates-grid,
+.admin-submissions-grid,
+.coordinator-student-grid,
+.coordinator-activities-grid,
+.coordinator-opportunity-grid,
+.coordinator-certificate-grid,
+.coordinator-rules-grid,
+.opportunity-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.coordinator-submission-meta,
+.coordinator-certificate-meta,
+.coordinator-student-meta,
+.admin-opportunity-meta-grid,
+.admin-submission-meta-grid,
+.admin-certificate-meta-grid,
+.activity-meta-grid,
+.admin-course-metrics,
+.admin-rule-metrics,
+.coordinator-opportunity-meta,
+.coordinator-rule-meta,
+.certificate-history-meta,
+.certificate-summary-grid,
+.certificate-meta-card,
+.admin-report-catalog,
+.admin-risk-list,
+.settings-maintenance-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

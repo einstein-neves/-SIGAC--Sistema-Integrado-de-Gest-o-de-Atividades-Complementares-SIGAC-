@@ -137,6 +137,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       saveToken(data.token);
+      if (data.mustChangePassword || data.user?.mustChangePassword) {
+        show(loginMessage, 'Senha temporária validada. Cadastre sua senha definitiva.', 'success');
+        setTimeout(() => {
+          window.location.href = 'resetarsenha.html?mode=temporary';
+        }, 600);
+        return;
+      }
       show(loginMessage, `Sucesso! Bem-vindo, ${data.user.nome}.`, 'success');
       setTimeout(() => {
         window.location.href = routes[data.user.tipo] || 'index.html';

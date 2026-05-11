@@ -1,0 +1,44 @@
+/* Charts */
+.chart-card {
+  display: grid;
+  gap: 12px;
+}
+
+.chart-box,
+.chart-box--donut,
+.chart-box--lg,
+.chart-box--md {
+  position: relative;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--chart-bg);
+  color: var(--chart-text);
+}
+
+.chart-box--donut {
+  min-height: 240px;
+}
+
+.chart-box--lg {
+  min-height: 320px;
+}
+
+.chart-box--md {
+  min-height: 260px;
+}
+
+.chart-fallback {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+  background: var(--surface-2);
+}

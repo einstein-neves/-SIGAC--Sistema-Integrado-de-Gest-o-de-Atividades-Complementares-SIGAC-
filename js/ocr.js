@@ -14,11 +14,17 @@
         existing.addEventListener('error', reject, { once: true });
         return;
       }
+
       const script = document.createElement('script');
       script.src = src;
       script.async = true;
-      script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
-      script.onerror = () => reject(new Error('Nao foi possivel carregar as bibliotecas externas do OCR. Verifique a conexao com a internet ou faca a validacao manual do certificado.'));
+      script.onload = () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      };
+      script.onerror = () => reject(
+        new Error('Nao foi possivel carregar as bibliotecas externas do OCR. Verifique a conexao com a internet ou faca a validacao manual do certificado.')
+      );
       document.head.appendChild(script);
     });
   }
@@ -26,19 +32,24 @@
   async function ensureDependencies() {
     await ensureScript(PDF_CDN);
     await ensureScript(TESSERACT_CDN);
+
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     if (pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_CDN;
+
     if (!pdfjsLib || !window.Tesseract) {
       throw new Error('Nao foi possivel inicializar as bibliotecas externas do OCR. Continue o envio manualmente e use os dados preenchidos no formulario como fonte final.');
     }
+
     return { pdfjsLib, Tesseract: window.Tesseract };
   }
 
   function dataUrlToBlob(dataUrl) {
     const [meta, base64] = String(dataUrl || '').split(',');
     if (!base64) throw new Error('Arquivo inválido para OCR.');
+
     const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'application/octet-stream';
     const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+
     return new Blob([bytes], { type: mime });
   }
 
@@ -65,25 +76,126 @@
       .trim();
   }
 
-  function detectCourseOrEventName(asciiText, detectedTitle) {
+  function cleanupCourseName(value) {
+    return cleanupDetectedValue(value)
+      .replace(/\s+com\s+dura(?:c|ç)[aã]o.*$/i, '')
+      .replace(/\s+realizando\s+todas.*$/i, '')
+      .replace(/\s+e\s+avalia(?:c|ç)[oõ]es.*$/i, '')
+      .replace(/\s*\[\s*(\d{1,3})\s*horas?\s*\]\s*/i, ' [$1 HORAS]')
+      .trim();
+  }
+
+  function formatCnpj(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    if (digits.length !== 14) return cleanupDetectedValue(value);
+
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  }
+
+  function detectCnpj(asciiText) {
+    const match = asciiText.match(/\bCNPJ\s*[:\-]?\s*(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}\-?\d{2})\b/i);
+    return match ? formatCnpj(match[1]) : '';
+  }
+
+  function normalizeNumericDate(value) {
+    const match = String(value || '').match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})\b/);
+    if (!match) return '';
+
+    const day = match[1].padStart(2, '0');
+    const month = match[2].padStart(2, '0');
+    const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+
+    return `${day}/${month}/${year}`;
+  }
+
+  function detectWrittenDate(asciiText) {
+    const monthMap = {
+      janeiro: '01',
+      fevereiro: '02',
+      marco: '03',
+      março: '03',
+      abril: '04',
+      maio: '05',
+      junho: '06',
+      julho: '07',
+      agosto: '08',
+      setembro: '09',
+      outubro: '10',
+      novembro: '11',
+      dezembro: '12'
+    };
+
+    const months = Object.keys(monthMap).join('|');
+    const match = asciiText.match(new RegExp('\\b(\\d{1,2})\\s+de\\s+(' + months + ')\\s+de\\s+(\\d{4})\\b', 'i'));
+
+    if (!match) return '';
+
+    const day = match[1].padStart(2, '0');
+    const month = monthMap[String(match[2]).toLowerCase()] || '';
+
+    return month ? `${day}/${month}/${match[3]}` : '';
+  }
+
+  function detectInstitution(asciiText) {
+    const detectedCnpj = detectCnpj(asciiText);
+
+    const companyWithCnpj = asciiText.match(/\b([A-Za-z0-9À-ÿ &.,'’\-–—]{3,120}?(?:LTDA|EIRELI|S\.?A\.?|ME|EPP))\s*[–—-]?\s*CNPJ\s*[:\-]?\s*(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}\-?\d{2})\b/i);
+    if (companyWithCnpj) {
+      const companyName = cleanupDetectedValue(companyWithCnpj[1]);
+      return `${companyName} - CNPJ: ${formatCnpj(companyWithCnpj[2])}`;
+    }
+
+    const companyOnly = asciiText.match(/\b([A-Za-z0-9À-ÿ &.,'’\-–—]{3,120}?(?:LTDA|EIRELI|S\.?A\.?|ME|EPP))\b/i);
+    if (companyOnly) return cleanupDetectedValue(companyOnly[1]);
+
+    const knownInstitution = asciiText.match(/\b(CURSO\s+EM\s+VIDEO|CURSOEMVIDEO|DIGIRATI\s+INFORMATICA|DIGIRATI|SENAC|SENAI|SEBRAE|UNINASSAU|UNICAP|UNINTER|IFPE|UFPE|UFRPE|UNIVERSIDADE|FACULDADE|ESCOLA\s+TECNICA|INSTITUTO\s+FEDERAL|CENTRO\s+UNIVERSITARIO|ALURA|UDEMY|FUNDA[CC]AO\s+BRADESCO|FGV)\b/i);
+    if (knownInstitution) return cleanupDetectedValue(knownInstitution[1]);
+
+    return detectedCnpj ? `CNPJ: ${detectedCnpj}` : '';
+  }
+
+  function detectCertificateCode(asciiText) {
+    const match = findFirstMatch(asciiText, [
+      /\b(?:codigo\s+do\s+certificado|codigo\s+certificado|codigo|code|certificado\s+n[ºo])\s*[:\-]?\s*([A-Z0-9]{3,}(?:[-\/][A-Z0-9]{1,})+)\b/i,
+      /\b([A-Z0-9]{5,}(?:-[A-Z0-9]{2,}){1,})\b/i
+    ]);
+
+    return match?.[1] ? cleanupDetectedValue(match[1]) : '';
+  }
+
+  function detectCourseOrEventName(asciiText, detectedTitle, originalText = '') {
+    const originalLines = String(originalText || '')
+      .split(/\r?\n+/)
+      .map((line) => cleanupCourseName(normalizeForMatching(line)))
+      .filter(Boolean);
+
     const patterns = [
-      /\b(?:curso|oficina|minicurso|workshop|palestra|seminario|evento|feira|jornada|congresso)\s+(?:de|sobre|em)?\s*[:\-]?\s*([A-Z0-9][A-Za-z0-9 '&\/-]{5,80})/i,
-      /\btema\s*[:\-]\s*([A-Z0-9][A-Za-z0-9 '&\/-]{5,80})/i,
-      /\breferente\s+a[oa]?\s*[:\-]?\s*([A-Z0-9][A-Za-z0-9 '&\/-]{5,80})/i
+      /\bJAVA\s+BASICO\s*\[\s*\d{1,3}\s*HORAS?\s*\]/i,
+      /\bcurso\s+em\s+videoaula\s+([A-Z0-9][A-Za-z0-9 #+.'’&\/\-\[\]]{3,100}?)(?=\s+com\s+duracao|\s+com\s+duração|\s+realizando|\s+e\s+avaliacoes|\s+e\s+avaliações|$)/i,
+      /\b(?:curso|oficina|minicurso|workshop|palestra|seminario|evento|feira|jornada|congresso)\s+(?:de|sobre|em)?\s*[:\-]?\s*([A-Z0-9][A-Za-z0-9 #+.'’&\/\-\[\]]{5,100})/i,
+      /\btema\s*[:\-]\s*([A-Z0-9][A-Za-z0-9 #+.'’&\/\-\[\]]{5,100})/i,
+      /\breferente\s+a[oa]?\s*[:\-]?\s*([A-Z0-9][A-Za-z0-9 #+.'’&\/\-\[\]]{5,100})/i
     ];
 
     for (const pattern of patterns) {
       const match = asciiText.match(pattern);
-      if (match?.[1]) return cleanupDetectedValue(match[1]);
+      if (match) return cleanupCourseName(match[1] || match[0]);
     }
+
+    const titleLine = originalLines.find((line) => {
+      if (/\b(?:certificado|certificamos|declaramos|codigo|cnpj|powered|lei)\b/i.test(line)) return false;
+      return /\b(?:JAVA|BASICO|HTML|CSS|PYTHON|JAVASCRIPT|EXCEL|LOGICA|BANCO\s+DE\s+DADOS|HORAS?)\b/i.test(line);
+    });
+
+    if (titleLine) return cleanupCourseName(titleLine);
 
     const lines = asciiText
       .split(/(?<=\.)\s+|\n/)
-      .map((line) => cleanupDetectedValue(line))
+      .map((line) => cleanupCourseName(line))
       .filter(Boolean);
 
     const blacklist = new Set([
-      detectedTitle.toLowerCase(),
+      String(detectedTitle || '').toLowerCase(),
       'certificado',
       'declaracao',
       'certificamos que',
@@ -92,10 +204,12 @@
 
     const fallback = lines.find((line) => {
       const lower = line.toLowerCase();
+
       if (blacklist.has(lower)) return false;
       if (/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/.test(line)) return false;
-      if (/\b(?:horas?|hrs?|hs?|h)\b/i.test(line)) return false;
-      return /\b(?:curso|oficina|minicurso|workshop|palestra|seminario|evento|feira|jornada|congresso)\b/i.test(line);
+      if (/\bcodigo\b|\bcnpj\b|\bpowered\b/i.test(line)) return false;
+
+      return /\b(?:curso|oficina|minicurso|workshop|palestra|seminario|evento|feira|jornada|congresso|java|python|javascript|html|css|excel)\b/i.test(line);
     });
 
     return fallback || '';
@@ -105,6 +219,7 @@
     if (!items.length) return '';
     if (items.length === 1) return items[0];
     if (items.length === 2) return `${items[0]} e ${items[1]}`;
+
     return `${items.slice(0, -1).join(', ')} e ${items[items.length - 1]}`;
   }
 
@@ -131,12 +246,14 @@
 
   function dedupeOcrFields(fields) {
     const seen = new Set();
+
     return (Array.isArray(fields) ? fields : [])
       .map((field) => formatOcrFieldLabel(field))
       .filter(Boolean)
       .filter((field) => {
         const key = normalizeFieldKey(field);
         if (!key || seen.has(key)) return false;
+
         seen.add(key);
         return true;
       });
@@ -152,10 +269,12 @@
     }
 
     const parts = [];
+
     if (uniqueFoundFields.length) {
       const intro = uniqueMissingFields.length
         ? 'OCR de apoio concluído com pendências.'
         : 'OCR de apoio concluído.';
+
       parts.push(`${intro} Foram identificados ${joinHumanList(uniqueFoundFields)}.`);
     } else {
       parts.push('OCR de apoio concluído sem dados suficientes para pré-análise automática.');
@@ -167,6 +286,7 @@
 
     if (detectedHours > 0) parts.push(`Carga horária detectada: ${detectedHours}h.`);
     if (detectedCourseName) parts.push(`Curso/evento detectado: ${detectedCourseName}.`);
+
     parts.push('O OCR é apenas apoio e não substitui a validação humana nem os dados obrigatórios informados no formulário.');
 
     return parts.join(' ');
@@ -176,6 +296,7 @@
     const uniqueMissingFields = dedupeOcrFields(missingFields);
 
     let reason = 'O OCR identificou informações parciais. Confirme manualmente antes da decisão final.';
+
     if (ocrStatus === 'aprovado_automatico') {
       reason = 'Os principais dados foram encontrados com boa consistência, mas a validação humana continua obrigatória.';
     } else if (ocrStatus === 'rejeitado_automatico') {
@@ -189,19 +310,101 @@
     return reason;
   }
 
+  function buildRejectedOcrMissingReport({
+    ocrStatus,
+    missingFields,
+    foundFields,
+    detectedHours,
+    detectedDate,
+    detectedInstitution,
+    detectedCnpj,
+    detectedCourseName,
+    detectedTitle,
+    detectedName,
+    expectedName
+  }) {
+    if (ocrStatus !== 'rejeitado_automatico') {
+      return {
+        shouldShow: false,
+        title: '',
+        message: '',
+        missingFields: [],
+        foundFields: dedupeOcrFields(foundFields),
+        tips: []
+      };
+    }
+
+    const uniqueMissingFields = dedupeOcrFields(missingFields);
+    const uniqueFoundFields = dedupeOcrFields(foundFields);
+
+    const tipsByField = {
+      'título do certificado': 'Não foi identificado que o arquivo é um certificado ou declaração válida.',
+      'nome do participante': expectedName
+        ? `O nome esperado "${expectedName}" não foi encontrado no texto extraído.`
+        : 'O nome do participante não foi encontrado no certificado.',
+      'carga horária': 'Não foi encontrada uma carga horária válida, como "40 horas", "40h" ou "40 hrs".',
+      data: 'Não foi encontrada uma data válida, como "25/10/2025" ou "25 de outubro de 2025".',
+      instituição: 'Não foi encontrada uma instituição válida. O sistema aceita nome da instituição, empresa LTDA ou CNPJ.',
+      'curso/evento': 'Não foi identificado o nome do curso, evento, oficina, palestra ou atividade.'
+    };
+
+    const tips = uniqueMissingFields.map((field) => tipsByField[field] || `Campo não identificado: ${field}.`);
+
+    const detectedParts = [];
+
+    if (detectedTitle) detectedParts.push(`título: ${detectedTitle}`);
+    if (detectedName) detectedParts.push(`nome: ${detectedName}`);
+    if (detectedCourseName) detectedParts.push(`curso/evento: ${detectedCourseName}`);
+    if (detectedHours > 0) detectedParts.push(`carga horária: ${detectedHours}h`);
+    if (detectedDate) detectedParts.push(`data: ${detectedDate}`);
+    if (detectedInstitution) detectedParts.push(`instituição: ${detectedInstitution}`);
+    if (detectedCnpj) detectedParts.push(`CNPJ: ${detectedCnpj}`);
+
+    const missingText = uniqueMissingFields.length
+      ? `Campos faltando: ${joinHumanList(uniqueMissingFields)}.`
+      : 'Nenhum campo faltante foi listado, mas a confiança do OCR foi baixa.';
+
+    const foundText = detectedParts.length
+      ? `Dados encontrados: ${detectedParts.join('; ')}.`
+      : 'Nenhum dado confiável foi encontrado no certificado.';
+
+    return {
+      shouldShow: true,
+      title: 'OCR rejeitado: informações obrigatórias não encontradas',
+      message: `${missingText} ${foundText}`,
+      missingFields: uniqueMissingFields,
+      foundFields: uniqueFoundFields,
+      tips
+    };
+  }
+
   function detectTextPatterns(text, expectedName = '') {
-    const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+    const originalText = String(text || '');
+    const normalized = originalText
+      .replace(/\r/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
     const asciiText = normalizeForMatching(normalized);
     const lowerAscii = asciiText.toLowerCase();
     const expectedAscii = normalizeForMatching(expectedName).toLowerCase();
 
     const hourMatch = findFirstMatch(asciiText, [
-      /\b(?:carga\s*horaria|carga|duracao|duracao total|dura(?:c|\u00e7)[a\u00e3]o)\s*[:\-]?\s*(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
+      /\b(?:carga\s*horaria|carga|duracao|duracao\s+total|dura(?:c|ç)[aã]o(?:\s+total)?)\s*[:\-]?\s*(?:de\s+)?(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
+      /\[\s*(\d{1,3})\s*HORAS?\s*\]/i,
       /\b(\d{1,3})\s*(?:horas?|hrs?|hs?|h)\b/i,
       /\b(\d{1,3})\s*horas?\s*complementares\b/i
     ]);
+
     const dateMatch = asciiText.match(/\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/);
-    const institutionMatch = asciiText.match(/\b(SENAC|SENAI|SEBRAE|UNINASSAU|UNICAP|UNINTER|IFPE|UFPE|UNIVERSIDADE|FACULDADE|ESCOLA TECNICA|INSTITUTO FEDERAL|CENTRO UNIVERSITARIO)\b/i);
+    const writtenDate = detectWrittenDate(asciiText);
+    const detectedDate = dateMatch ? normalizeNumericDate(dateMatch[0]) : writtenDate;
+
+    const detectedCnpj = detectCnpj(asciiText);
+    const detectedInstitution = detectInstitution(asciiText);
+    const detectedCode = detectCertificateCode(asciiText);
+
     const titleMatch = findFirstMatch(asciiText, [
       /\bcertificado\s+de\s+(participacao|conclusao|aprovacao|presenca)\b/i,
       /\bcertificado\b/i,
@@ -220,11 +423,14 @@
     const detectedTitle = titleMatch
       ? (titleMatch[1] ? (titleLabelMap[titleMatch[1].toLowerCase()] || titleMatch[0]) : titleMatch[0])
       : '';
+
     const detectedName = expectedAscii && lowerAscii.includes(expectedAscii) ? expectedName : '';
     const detectedHours = hourMatch ? Number(hourMatch[1]) : 0;
-    const detectedCourseName = detectCourseOrEventName(asciiText, detectedTitle);
+    const detectedCourseName = detectCourseOrEventName(asciiText, detectedTitle, normalized);
+
     const foundFields = [];
     const missingFields = [];
+
     let score = 0;
 
     if (detectedTitle) {
@@ -248,16 +454,16 @@
       missingFields.push('carga horaria');
     }
 
-    if (dateMatch) {
+    if (detectedDate) {
       foundFields.push('data');
       score += 1;
     } else {
       missingFields.push('data');
     }
 
-    if (institutionMatch) {
+    if (detectedInstitution) {
       foundFields.push('instituicao');
-      score += 1;
+      score += detectedCnpj ? 2 : 1;
     } else {
       missingFields.push('instituicao');
     }
@@ -274,26 +480,56 @@
     }
 
     let ocrStatus = 'analise_manual';
+
     if (!normalized || normalized.length < 20) {
       ocrStatus = 'rejeitado_automatico';
     } else if (detectedTitle && detectedHours > 0 && detectedCourseName && (!expectedName || detectedName) && score >= 7) {
       ocrStatus = 'aprovado_automatico';
-    } else if (!detectedTitle && !detectedHours && !institutionMatch && !dateMatch) {
+    } else if (!detectedTitle && !detectedHours && !detectedInstitution && !detectedDate) {
       ocrStatus = 'rejeitado_automatico';
     }
 
     const normalizedFoundFields = dedupeOcrFields(foundFields);
     const normalizedMissingFields = dedupeOcrFields(missingFields)
       .filter((field) => !normalizedFoundFields.some((foundField) => normalizeFieldKey(foundField) === normalizeFieldKey(field)));
-    const humanSummary = buildHumanSummary(normalizedFoundFields, normalizedMissingFields, detectedCourseName, detectedHours);
+
+    let humanSummary = buildHumanSummary(normalizedFoundFields, normalizedMissingFields, detectedCourseName, detectedHours);
+
+    if (detectedCode) humanSummary += ` Código do certificado detectado: ${detectedCode}.`;
+    if (detectedCnpj) humanSummary += ` CNPJ detectado: ${detectedCnpj}.`;
+
     const ocrReason = buildOcrReason(ocrStatus, normalizedMissingFields);
+
+    const rejectedMissingReport = buildRejectedOcrMissingReport({
+      ocrStatus,
+      missingFields: normalizedMissingFields,
+      foundFields: normalizedFoundFields,
+      detectedHours,
+      detectedDate,
+      detectedInstitution,
+      detectedCnpj,
+      detectedCourseName,
+      detectedTitle,
+      detectedName,
+      expectedName
+    });
+
+    if (rejectedMissingReport.shouldShow) {
+      humanSummary += ` ${rejectedMissingReport.message}`;
+
+      if (rejectedMissingReport.tips.length) {
+        humanSummary += ` Motivos: ${rejectedMissingReport.tips.join(' ')}`;
+      }
+    }
 
     return {
       extractedText: normalized,
       detectedHours,
       detectedName,
-      detectedInstitution: institutionMatch ? institutionMatch[0] : '',
-      detectedDate: dateMatch ? dateMatch[0] : '',
+      detectedInstitution,
+      detectedCnpj,
+      detectedDate,
+      detectedCode,
       detectedTitle,
       detectedCourseName,
       foundFields: normalizedFoundFields,
@@ -301,32 +537,60 @@
       confidenceScore: score,
       humanSummary,
       ocrStatus,
-      ocrReason
+      ocrReason,
+      rejectedMissingReport
     };
   }
 
   async function extractPdfText(blob, pdfjsLib) {
     const arrayBuffer = await blob.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const page = await pdf.getPage(1);
-    const textContent = await page.getTextContent();
-    const rawText = textContent.items.map((item) => item.str).join(' ').trim();
+    const textParts = [];
+    const canvases = [];
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item) => item.str).join(' ').trim();
+
+      if (pageText.length > 20) {
+        textParts.push(pageText);
+        continue;
+      }
+
+      const viewport = page.getViewport({ scale: 2.25 });
+      const canvas = document.createElement('canvas');
+
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.imageSmoothingEnabled = true;
+
+      await page.render({ canvasContext: context, viewport }).promise;
+      canvases.push(canvas);
+    }
+
+    const rawText = textParts.join('\n').trim();
+
     if (rawText.length > 30) return rawText;
 
-    const viewport = page.getViewport({ scale: 1.5 });
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const context = canvas.getContext('2d');
-    await page.render({ canvasContext: context, viewport }).promise;
-    return { canvas };
+    return { canvases };
   }
 
   async function runOcr(source, Tesseract) {
     const worker = await Tesseract.createWorker('por');
+
     try {
-      const { data } = await worker.recognize(source);
-      return data.text || '';
+      const sources = Array.isArray(source) ? source : [source];
+      const texts = [];
+
+      for (const item of sources.filter(Boolean)) {
+        const { data } = await worker.recognize(item);
+        texts.push(data.text || '');
+      }
+
+      return texts.join('\n').trim();
     } finally {
       await worker.terminate();
     }
@@ -339,10 +603,11 @@
 
     if (blob.type === 'application/pdf') {
       const pdfResult = await extractPdfText(blob, pdfjsLib);
+
       if (typeof pdfResult === 'string') {
         extractedText = pdfResult;
       } else {
-        extractedText = await runOcr(pdfResult.canvas, Tesseract);
+        extractedText = await runOcr(pdfResult.canvases || pdfResult.canvas, Tesseract);
       }
     } else {
       extractedText = await runOcr(blob, Tesseract);

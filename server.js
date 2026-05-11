@@ -1,4 +1,5 @@
-const http = require('node:http');
+
+const http = require('node:http'); 
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -127,6 +128,45 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(test, 'hex'));
 }
 
+function generateTemporaryPassword() {
+  const numberPart = crypto.randomInt(10000, 99999);
+  const letterPart = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `Sigac@${numberPart}${letterPart}`;
+}
+
+function normalizeMatriculaPrefix(value, fallback = 'SIGAC') {
+  const cleaned = String(value || fallback)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase();
+  return cleaned || fallback;
+}
+
+async function generateMatricula(tipo, courseId = '') {
+  const year = new Date().getFullYear();
+  let prefix = 'SIGAC';
+  if (tipo === 'aluno' && courseId) {
+    const course = await getCourseById(courseId);
+    prefix = normalizeMatriculaPrefix(course?.sigla || 'ALU', 'ALU');
+  } else if (tipo === 'coordenador') {
+    prefix = 'COORD';
+  } else if (tipo === 'superadmin') {
+    prefix = 'ADM';
+  }
+
+  const base = `${prefix}${year}`;
+  const row = await db.prepare('SELECT COUNT(*) AS total FROM users WHERE matricula LIKE ?').get(`${base}%`);
+  let next = Number(row?.total || 0) + 1;
+  while (next < 10000) {
+    const matricula = `${base}${String(next).padStart(4, '0')}`;
+    const exists = await db.prepare('SELECT 1 FROM users WHERE matricula = ?').get(matricula);
+    if (!exists) return matricula;
+    next += 1;
+  }
+  return `SIGAC-${year}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+}
+
 async function seedIfEmpty() {
   const countRow = await db.prepare('SELECT COUNT(*) AS total FROM users').get();
   if (Number(countRow?.total || 0) > 0) return;
@@ -215,6 +255,14 @@ async function ensureDemoAccessAccounts() {
       'aluno.ads@sigac.com',
       'aluno.ads2@sigac.com'
     );
+}
+
+async function ensureMatriculas() {
+  await db.exec(`
+    UPDATE users
+    SET matricula = 'SIGAC-' || EXTRACT(YEAR FROM NOW())::INT || '-' || UPPER(SUBSTRING(MD5(id), 1, 8))
+    WHERE matricula IS NULL OR matricula = '';
+  `);
 }
 
 async function getSetting(key, fallback = '') {
@@ -371,6 +419,9 @@ async function serializeUser(row, courseIdsByUser = null) {
     email: row.email,
     tipo: row.tipo,
     ativo: !!row.ativo,
+    matricula: row.matricula || '',
+    mustChangePassword: !!Number(row.must_change_password || 0),
+    passwordUpdatedAt: row.password_updated_at || '',
     courseId: row.course_id || '',
     courseIds: row.tipo === 'coordenador'
       ? (mappedCourseIds || await getCoordinatorCourseIds(row.id))
@@ -410,6 +461,7 @@ async function listCourses() {
 }
 
 async function listUsers() {
+  await ensureMatriculas();
   const rows = await db.prepare('SELECT * FROM users ORDER BY nome').all();
   const courseIdsByUser = new Map();
   const addCourseId = (userId, courseId) => {
@@ -1576,11 +1628,15 @@ function getToken(req) {
   return '';
 }
 
-async function requireAuth(req, res, urlObj, roles = null) {
+async function requireAuth(req, res, urlObj, roles = null, options = {}) {
   const token = getToken(req, urlObj);
   const user = token ? await getSessionUser(token) : null;
   if (!user) {
     send(res, 401, { error: 'Sessão inválida ou expirada.' });
+    return null;
+  }
+  if (user.mustChangePassword && !options.allowPasswordChange) {
+    send(res, 403, { error: 'Troque sua senha temporária antes de continuar.', mustChangePassword: true });
     return null;
   }
   if (roles) {
@@ -1644,7 +1700,24 @@ const server = http.createServer(async (req, res) => {
       }
       const user = await serializeUser(row);
       const token = await createSession(user.id);
-      return send(res, 200, { token, user });
+      return send(res, 200, { token, user, mustChangePassword: !!user.mustChangePassword });
+    }
+
+    if (pathname === '/api/auth/change-temporary-password' && req.method === 'POST') {
+      const auth = await requireAuth(req, res, urlObj, ['superadmin', 'coordenador', 'aluno'], { allowPasswordChange: true });
+      if (!auth) return;
+      const body = await parseBody(req);
+      const senha = String(body.senha || '');
+      const confirmar = String(body.confirmar || body.confirmarSenha || '');
+      if (!senha) return send(res, 400, { error: 'Informe a nova senha.' });
+      if (senha.length < 8) return send(res, 400, { error: 'A senha deve ter ao menos 8 caracteres.' });
+      if (confirmar && senha !== confirmar) return send(res, 400, { error: 'As senhas não coincidem.' });
+      await db.prepare('UPDATE users SET senha_hash = ?, must_change_password = 0, password_updated_at = ? WHERE id = ?')
+        .run(hashPassword(senha), nowIso(), auth.user.id);
+      await deleteUserSessions(auth.user.id);
+      await addNotification(auth.user.id, 'Sua senha definitiva foi cadastrada com sucesso.', 'success');
+      await logAudit(auth.user.id, 'alterou_senha_temporaria', 'user', auth.user.id, 'Primeiro acesso finalizado');
+      return send(res, 200, { ok: true });
     }
 
     if (pathname === '/api/auth/logout' && req.method === 'POST') {
@@ -1654,43 +1727,19 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/auth/request-password-reset' && req.method === 'POST') {
-      const body = await parseBody(req);
-      const email = String(body.email || '').trim().toLowerCase();
-      if (!email) return send(res, 400, { error: 'Informe o e-mail cadastrado.' });
-
-      const row = await db.prepare('SELECT * FROM users WHERE email = ? AND ativo = 1').get(email);
-      if (row) {
-        const token = await createPasswordResetToken(row.id);
-        const resetHost = HOST === '0.0.0.0' ? 'localhost' : HOST;
-        const resetUrl = `http://${resetHost}:${PORT}/resetarsenha.html?token=${encodeURIComponent(token)}`;
-        await queueEmail(
-          email,
-          'SIGAC - token para redefinir senha',
-          `Use este link para redefinir sua senha no SIGAC: ${resetUrl}\n\nToken: ${token}\nValidade: ${Math.round(PASSWORD_RESET_TTL_MS / 60000)} minutos.`,
-          'reset-senha'
-        );
-      }
-
-      return send(res, 200, { ok: true, message: 'Se o e-mail existir e estiver ativo, um token de redefinição será enviado.' });
+      return send(res, 403, {
+        error: 'Recuperação por token foi desativada por segurança. Solicite ao administrador ou coordenador uma senha temporária.'
+      });
     }
 
     if (pathname === '/api/auth/reset-password' && req.method === 'POST') {
-      const body = await parseBody(req);
-      const token = String(body.token || '').trim();
-      const senha = String(body.senha || '');
-      if (!token || !senha) return send(res, 400, { error: 'Informe o token e a nova senha.' });
-      if (senha.length < 8) return send(res, 400, { error: 'A senha deve ter ao menos 8 caracteres.' });
-      const row = await consumePasswordResetToken(token);
-      if (!row) return send(res, 400, { error: 'Token inválido, expirado ou já utilizado.' });
-      await db.prepare('UPDATE users SET senha_hash = ? WHERE id = ?').run(hashPassword(senha), row.user_id);
-      await deleteUserSessions(row.user_id);
-      await addNotification(row.user_id, 'Sua senha foi redefinida com sucesso.', 'info');
-      await queueEmail(row.email, 'SIGAC - senha redefinida', 'Sua senha foi alterada com sucesso no SIGAC.', 'reset-senha');
-      return send(res, 200, { ok: true });
+      return send(res, 403, {
+        error: 'Redefinição por token foi desativada. Use o fluxo de senha temporária gerada pelo administrador/coordenador.'
+      });
     }
 
     if (pathname === '/api/me' && req.method === 'GET') {
-      const auth = await requireAuth(req, res, urlObj, ['superadmin', 'coordenador', 'aluno']);
+      const auth = await requireAuth(req, res, urlObj, ['superadmin', 'coordenador', 'aluno'], { allowPasswordChange: true });
       if (!auth) return;
       return send(res, 200, { user: auth.user });
     }
@@ -1997,14 +2046,14 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const nome = String(body.nome || '').trim();
       const email = String(body.email || '').trim().toLowerCase();
-      const senha = String(body.senha || '').trim();
+      const senhaInformada = String(body.senha || '').trim();
       const courseId = String(body.courseId || '').trim();
       const coordinatorCourses = await getCoordinatorCourseIds(auth.user.id);
 
-      if (!nome || !email || !senha || !courseId) {
-        return send(res, 400, { error: 'Preencha nome, e-mail, senha e curso.' });
+      if (!nome || !email || !courseId) {
+        return send(res, 400, { error: 'Preencha nome, e-mail e curso.' });
       }
-      if (senha.length < 8) {
+      if (senhaInformada && senhaInformada.length < 8) {
         return send(res, 400, { error: 'A senha deve ter ao menos 8 caracteres.' });
       }
       if (!coordinatorCourses.includes(courseId)) {
@@ -2014,14 +2063,16 @@ const server = http.createServer(async (req, res) => {
       if (exists) return send(res, 409, { error: 'Este e-mail já está cadastrado.' });
 
       const id = uid('user');
-      await db.prepare('INSERT INTO users (id, nome, email, senha_hash, tipo, ativo, course_id, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)')
-        .run(id, nome, email, hashPassword(senha), 'aluno', courseId, nowIso());
+      const temporaryPassword = senhaInformada || generateTemporaryPassword();
+      const matricula = await generateMatricula('aluno', courseId);
+      await db.prepare('INSERT INTO users (id, nome, email, senha_hash, tipo, ativo, course_id, matricula, must_change_password, password_updated_at, temporary_password_issued_at, created_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, 1, ?, ?, ?)')
+        .run(id, nome, email, hashPassword(temporaryPassword), 'aluno', courseId, matricula, nowIso(), nowIso(), nowIso());
       await db.prepare('INSERT INTO student_courses (user_id, course_id) VALUES (?, ?) ON CONFLICT DO NOTHING').run(id, courseId);
       const course = await getCourseById(courseId);
       await addNotification(id, `Seu acesso ao SIGAC foi criado e vinculado ao curso ${course?.sigla || courseId}.`, 'info');
       await queueEmail(email, 'SIGAC - acesso de Aluno criado', `Olá, ${nome}. Seu acesso ao SIGAC foi criado pelo coordenador ${auth.user.nome}.`, 'boas-vindas');
       await logAudit(auth.user.id, 'criou_aluno', 'user', id, `${nome} em ${course?.sigla || courseId}`);
-      return send(res, 201, { user: await getUserById(id) });
+      return send(res, 201, { user: await getUserById(id), temporaryPassword, matricula });
     }
 
     if (pathname.match(/^\/api\/coordinator\/submissions\/[^/]+\/evaluate$/) && req.method === 'POST') {
@@ -2311,15 +2362,15 @@ const server = http.createServer(async (req, res) => {
       const body = await parseBody(req);
       const nome = String(body.nome || '').trim();
       const email = String(body.email || '').trim().toLowerCase();
-      const senha = String(body.senha || '').trim();
+      const senhaInformada = String(body.senha || '').trim();
       const tipo = String(body.tipo || '').trim();
       const courseId = String(body.courseId || '').trim();
       const courseIds = Array.isArray(body.courseIds) ? [...new Set(body.courseIds.filter(Boolean))] : [];
       const ativo = body.ativo === false || body.ativo === 0 || body.ativo === '0' ? 0 : 1;
-      if (!nome || !email || !senha || !['aluno', 'coordenador'].includes(tipo)) {
-        return send(res, 400, { error: 'Preencha nome, e-mail, senha e função corretamente.' });
+      if (!nome || !email || !['aluno', 'coordenador'].includes(tipo)) {
+        return send(res, 400, { error: 'Preencha nome, e-mail e função corretamente.' });
       }
-      if (senha.length < 8) {
+      if (senhaInformada && senhaInformada.length < 8) {
         return send(res, 400, { error: 'A senha deve ter ao menos 8 caracteres.' });
       }
       if (tipo === 'aluno' && !(await getCourseById(courseId))) {
@@ -2334,8 +2385,10 @@ const server = http.createServer(async (req, res) => {
       const exists = await db.prepare('SELECT 1 FROM users WHERE email = ?').get(email);
       if (exists) return send(res, 400, { error: 'Este e-mail já está cadastrado.' });
       const id = uid('user');
-      await db.prepare('INSERT INTO users (id, nome, email, senha_hash, tipo, ativo, course_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(id, nome, email, hashPassword(senha), tipo, ativo, tipo === 'aluno' ? courseId : null, nowIso());
+      const temporaryPassword = senhaInformada || generateTemporaryPassword();
+      const matricula = await generateMatricula(tipo, tipo === 'aluno' ? courseId : '');
+      await db.prepare('INSERT INTO users (id, nome, email, senha_hash, tipo, ativo, course_id, matricula, must_change_password, password_updated_at, temporary_password_issued_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)')
+        .run(id, nome, email, hashPassword(temporaryPassword), tipo, ativo, tipo === 'aluno' ? courseId : null, matricula, nowIso(), nowIso(), nowIso());
       if (tipo === 'aluno') {
         await db.prepare('INSERT INTO student_courses (user_id, course_id) VALUES (?, ?) ON CONFLICT DO NOTHING').run(id, courseId);
       }
@@ -2355,7 +2408,22 @@ const server = http.createServer(async (req, res) => {
         `O usuário ${nome} (${tipo}) foi criado por ${auth.user.nome}.`,
         auth.user.id
       );
-      return send(res, 200, { user: await getUserById(id) });
+      return send(res, 200, { user: await getUserById(id), temporaryPassword, matricula });
+    }
+
+    if (pathname.match(/^\/api\/admin\/users\/[^/]+\/reset-password$/) && req.method === 'POST') {
+      const auth = await requireAuth(req, res, urlObj, 'superadmin');
+      if (!auth) return;
+      const userId = pathname.split('/')[4];
+      const row = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      if (!row || row.tipo === 'superadmin') return send(res, 400, { error: 'Usuário inválido para redefinição.' });
+      const temporaryPassword = generateTemporaryPassword();
+      await db.prepare('UPDATE users SET senha_hash = ?, must_change_password = 1, password_updated_at = ?, temporary_password_issued_at = ? WHERE id = ?')
+        .run(hashPassword(temporaryPassword), nowIso(), nowIso(), userId);
+      await deleteUserSessions(userId);
+      await addNotification(userId, 'Sua senha foi redefinida pelo administrador. Use a senha temporária e cadastre uma nova senha no primeiro acesso.', 'warning');
+      await logAudit(auth.user.id, 'redefiniu_senha_usuario', 'user', userId, row.email);
+      return send(res, 200, { ok: true, temporaryPassword, matricula: row.matricula || '', user: await getUserById(userId) });
     }
 
     if (pathname.match(/^\/api\/admin\/users\/[^/]+\/status$/) && req.method === 'PATCH') {
@@ -2375,6 +2443,40 @@ const server = http.createServer(async (req, res) => {
         auth.user.id
       );
       return send(res, 200, { user: await getUserById(userId) });
+    }
+
+
+    if (pathname.match(/^\/api\/admin\/users\/[^/]+$/) && req.method === 'DELETE') {
+      const auth = await requireAuth(req, res, urlObj, 'superadmin');
+      if (!auth) return;
+      const userId = pathname.split('/')[4];
+      const row = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+      if (!row || row.tipo === 'superadmin') return send(res, 400, { error: 'Usuário inválido ou protegido.' });
+      if (row.id === auth.user.id) return send(res, 400, { error: 'Você não pode excluir o próprio usuário logado.' });
+
+      try {
+        await db.exec('BEGIN');
+        await db.prepare('UPDATE activity_rules SET created_by = NULL WHERE created_by = ?').run(userId);
+        await db.prepare('UPDATE certificates SET reviewed_by = NULL WHERE reviewed_by = ?').run(userId);
+        await db.prepare('UPDATE opportunities SET criado_por = ? WHERE criado_por = ?').run(auth.user.id, userId);
+        await db.prepare('UPDATE activities SET created_by = ? WHERE created_by = ?').run(auth.user.id, userId);
+        await db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+        await db.prepare('INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, details, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .run(uid('log'), auth.user.id, 'excluiu_usuario', 'user', userId, `${row.tipo}: ${row.nome} (${row.email})`, nowIso());
+        await db.exec('COMMIT');
+      } catch (error) {
+        await db.exec('ROLLBACK').catch(() => {});
+        return send(res, 500, { error: 'Não foi possível excluir o usuário com segurança.' });
+      }
+
+      await notifySuperAdmins(
+        `Super Admin ${auth.user.nome} excluiu o usuário ${row.nome}.`,
+        'warning',
+        'SIGAC - usuário excluído',
+        `O usuário ${row.nome} (${row.email}) foi removido por ${auth.user.nome}.`,
+        auth.user.id
+      );
+      return send(res, 200, { ok: true });
     }
 
     if (pathname === '/api/admin/courses' && req.method === 'POST') {
@@ -2633,6 +2735,7 @@ const server = http.createServer(async (req, res) => {
       });
       await seedIfEmpty();
       await ensureDemoAccessAccounts();
+      await ensureMatriculas();
       const adminRow = await db.prepare("SELECT * FROM users WHERE email = 'einstein@sigac.com'").get();
       const user = adminRow ? await serializeUser(adminRow) : null;
       const token = user ? await createSession(user.id) : '';
@@ -2678,6 +2781,7 @@ async function bootstrap() {
     await seedIfEmpty();
     await ensureDemoAccessAccounts();
   }
+  await ensureMatriculas();
   server.listen(PORT, HOST, () => {
     console.log(`SIGAC rodando em http://${HOST}:${PORT}`);
   });
@@ -2687,3 +2791,7 @@ bootstrap().catch((error) => {
   console.error('[SIGAC BOOT ERROR]', error);
   process.exit(1);
 });
+
+
+
+

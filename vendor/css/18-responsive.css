@@ -1,0 +1,179 @@
+/* Responsividade */
+@media (max-width: 1180px) {
+  :root {
+    --sidebar-width: 230px;
+  }
+
+  .metrics,
+  .dashboard-kpis,
+  .dashboard-metrics,
+  .activity-summary-grid,
+  .admin-report-metrics,
+  .audit-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 980px) {
+  .console-header {
+    position: relative;
+    height: auto;
+    grid-template-columns: 1fr;
+    align-items: start;
+    padding: 12px var(--page-gutter);
+  }
+
+  .console-brand {
+    grid-template-columns: 58px 1px minmax(0, 1fr);
+    min-height: 58px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: relative;
+    top: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  .menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar,
+  .section-title,
+  .card-head,
+  .chart-head,
+  .dashboard-section-head,
+  .modal-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dual-grid,
+  .dashboard-grid,
+  .two-col,
+  .profile-grid,
+  .admin-users-layout,
+  .admin-rules-layout,
+  .admin-opportunities-layout,
+  .admin-reports-layout,
+  .admin-link-form-grid,
+  .admin-links-flow-grid,
+  .certificate-workspace,
+  .dashboard-overview,
+  .coordinator-student-top,
+  .admin-rule-form-grid,
+  .admin-opportunity-form-grid,
+  .admin-rule-hours-grid,
+  .coordinator-activity-form-grid,
+  .settings-grid,
+  .notification-composer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-courses-grid,
+  .admin-rules-grid,
+  .admin-opportunities-grid,
+  .admin-certificates-grid,
+  .admin-submissions-grid,
+  .coordinator-student-grid,
+  .coordinator-activities-grid,
+  .coordinator-opportunity-grid,
+  .coordinator-certificate-grid,
+  .coordinator-rules-grid,
+  .opportunity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-card {
+    grid-template-columns: 1fr;
+  }
+
+  .login-hero-copy h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --page-gutter: 14px;
+  }
+
+  .metrics,
+  .dashboard-kpis,
+  .dashboard-metrics,
+  .activity-summary-grid,
+  .admin-report-metrics,
+  .audit-summary-grid,
+  .coordinator-submission-meta,
+  .coordinator-certificate-meta,
+  .coordinator-student-meta,
+  .admin-opportunity-meta-grid,
+  .admin-submission-meta-grid,
+  .admin-certificate-meta-grid,
+  .activity-meta-grid,
+  .admin-course-metrics,
+  .admin-rule-metrics,
+  .coordinator-opportunity-meta,
+  .coordinator-rule-meta,
+  .certificate-history-meta,
+  .certificate-summary-grid,
+  .settings-maintenance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu {
+    grid-template-columns: 1fr;
+  }
+
+  .console-actions,
+  .topbar-actions,
+  .actions-row,
+  .modal-actions,
+  .admin-user-actions,
+  .opportunity-card-actions,
+  .activity-actions,
+  .coordinator-certificate-actions,
+  .coordinator-submission-actions,
+  .admin-certificate-actions {
+    justify-content: stretch;
+  }
+
+  .console-actions > *,
+  .topbar-actions > *,
+  .actions-row > *,
+  .modal-actions > *,
+  .admin-user-actions > *,
+  .opportunity-card-actions > *,
+  .activity-actions > *,
+  .coordinator-certificate-actions > *,
+  .coordinator-submission-actions > *,
+  .admin-certificate-actions > * {
+    width: 100%;
+  }
+
+  .login-card {
+    min-height: 0;
+    border-radius: 18px;
+  }
+
+  .login-hero,
+  .login-auth {
+    padding: 22px;
+  }
+
+  .chart-box,
+  .chart-box--lg,
+  .chart-box--md,
+  .chart-box--donut {
+    min-height: 220px;
+  }
+}
